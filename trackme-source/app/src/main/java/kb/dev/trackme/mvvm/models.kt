@@ -1,4 +1,4 @@
-package kb.dev.trackme.mvvm.models
+package kb.dev.trackme.mvvm
 
 enum class UserType{
     GUEST
