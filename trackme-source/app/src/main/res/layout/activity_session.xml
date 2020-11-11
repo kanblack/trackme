@@ -40,6 +40,7 @@
                 android:layout_marginTop="8dp"
                 android:drawablePadding="8dp"
                 android:hint="@string/hint_distance"
+                app:distance="@{viewModel.distance}"
                 app:drawableStartCompat="@drawable/ic_distance"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
@@ -52,8 +53,9 @@
                 android:layout_marginTop="8dp"
                 android:layout_marginEnd="16dp"
                 android:drawablePadding="8dp"
-                android:text="@string/hint_duration"
+                android:hint="@string/hint_duration"
                 app:drawableStartCompat="@drawable/ic_duration"
+                app:duration="@{viewModel.duration}"
                 app:layout_constraintRight_toRightOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
@@ -64,24 +66,26 @@
                 android:layout_marginStart="8dp"
                 android:layout_marginTop="8dp"
                 android:drawablePadding="8dp"
-                android:text="@string/hint_avg_speed"
+                android:hint="@string/hint_avg_speed"
                 app:drawableStartCompat="@drawable/ic_avg_speed"
                 app:layout_constraintLeft_toRightOf="@id/tvDistance"
                 app:layout_constraintRight_toLeftOf="@id/tvDuration"
-                app:layout_constraintTop_toTopOf="parent" />
+                app:layout_constraintTop_toTopOf="parent"
+                app:velocity="@{viewModel.avgSpeed}" />
 
             <ImageView
                 android:id="@+id/imvAction"
                 android:layout_width="75dp"
                 android:layout_height="75dp"
                 android:layout_marginBottom="24dp"
-                android:src="@drawable/ic_pause_circle"
+                app:sessionState="@{viewModel.sessionState}"
                 map:layout_constraintBottom_toBottomOf="parent"
                 map:layout_constraintEnd_toEndOf="parent"
                 map:layout_constraintStart_toStartOf="parent"
                 tools:ignore="ContentDescription" />
 
             <ImageView
+                android:id="@+id/imvResume"
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:layout_marginStart="16dp"
