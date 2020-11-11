@@ -1,5 +1,9 @@
 package kb.dev.trackme.repositories
 
-class SessionRepository(): SessionRepositoryImpl{
+interface SessionRepository {
+    fun startNewSession()
+    fun stopSession(sessionId: String)
+    fun pauseSession(sessionId: String)
+    fun getSessions(offset: Int, limit: Int)
 
 }

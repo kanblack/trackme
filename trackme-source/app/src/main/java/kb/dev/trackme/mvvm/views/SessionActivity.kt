@@ -18,7 +18,7 @@ class SessionActivity : AppCompatActivity() {
 
     private fun setupMap() {
         val mapFragment = supportFragmentManager
-            .findFragmentById(R.id.map) as SupportMapFragment
-        mapFragment.getMapAsync(viewModel)
+            .findFragmentById(R.id.map) as? SupportMapFragment
+        mapFragment?.let { viewModel.attachMap(it) }
     }
 }

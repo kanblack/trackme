@@ -1,7 +1,7 @@
 package kb.dev.trackme.mvvm.viewmodels
 
 import androidx.lifecycle.ViewModel
-import kb.dev.trackme.repositories.SessionRepositoryImpl
+import kb.dev.trackme.repositories.SessionRepository
 
-class SessionsHistoryViewModel(repository: SessionRepositoryImpl) : ViewModel(){
+class SessionsHistoryViewModel(repository: SessionRepository) : ViewModel(){
 }
