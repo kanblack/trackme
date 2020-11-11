@@ -1,4 +1,7 @@
 <resources>
     <string name="app_name">TrackMe</string>
     <string name="title_activity_maps">Map</string>
+    <string name="hint_distance">-- km</string>
+    <string name="hint_duration">--:--:--</string>
+    <string name="hint_avg_speed">-- km/h</string>
 </resources>
