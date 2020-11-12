@@ -1,9 +1,12 @@
 package kb.dev.trackme.mvvm.views
 
+import android.content.Intent
 import android.os.Bundle
+import android.view.View
 import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
+import androidx.lifecycle.Observer
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
@@ -16,7 +19,7 @@ import org.koin.android.viewmodel.ext.android.viewModel
 
 @ExperimentalCoroutinesApi
 @FlowPreview
-class SessionActivity : AppCompatActivity(), OnMapReadyCallback {
+class SessionActivity : AppCompatActivity() {
     private val viewModel: SessionViewModel by viewModel()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -43,10 +46,16 @@ class SessionActivity : AppCompatActivity(), OnMapReadyCallback {
         findViewById<ImageView>(R.id.imvResume).setOnClickListener {
             viewModel.onResumeButtonClicked()
         }
+
+        viewModel.getSaveSessionCompleteEvent().observe(this, {
+            startActivity(Intent(this, SessionsHistoryActivity::class.java))
+            finish()
+        })
     }
 
     private fun setupBindingData() {
-        val binding: ActivitySessionBinding = DataBindingUtil.setContentView(this, R.layout.activity_session)
+        val binding: ActivitySessionBinding =
+            DataBindingUtil.setContentView(this, R.layout.activity_session)
         binding.lifecycleOwner = this
         binding.viewModel = viewModel
     }
@@ -59,16 +68,23 @@ class SessionActivity : AppCompatActivity(), OnMapReadyCallback {
     private fun setupMap() {
         val mapFragment = supportFragmentManager
             .findFragmentById(R.id.map) as? SupportMapFragment
-        mapFragment?.getMapAsync(this)
+        mapFragment?.getMapAsync { googleMap ->
+            googleMap?.let { viewModel.onAttachMap(this, it) }
+        }
+
+        val mapFragmentToSave = supportFragmentManager
+            .findFragmentById(R.id.mapToSave) as? SupportMapFragment
+        mapFragmentToSave?.getMapAsync  { googleMap ->
+            googleMap?.let { viewModel.onAttachMapToSave(this, it) }
+        }
     }
 
-    override fun onMapReady(googleMap: GoogleMap?) {
-        googleMap?.let { viewModel.onAttachMap(this, it) }
-    }
 
-    override fun onRequestPermissionsResult(requestCode: Int,
-                                            permissions: Array<String>,
-                                            grantResults: IntArray) {
-        viewModel.onRequestPermissionsResult(this,requestCode, permissions, grantResults)
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<String>,
+        grantResults: IntArray
+    ) {
+        viewModel.onRequestPermissionsResult(this, requestCode, permissions, grantResults)
     }
 }

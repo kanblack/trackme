@@ -6,30 +6,44 @@
 
     <data>
 
+        <import type="kb.dev.trackme.SessionState" />
+
+        <import type="android.view.View" />
+
         <variable
             name="viewModel"
             type="kb.dev.trackme.mvvm.viewmodels.SessionViewModel" />
     </data>
 
-    <LinearLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical">
+
+        <fragment
+            android:id="@+id/mapToSave"
+            android:name="com.google.android.gms.maps.SupportMapFragment"
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            app:layout_constraintBottom_toTopOf="@+id/layoutSession"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:context=".mvvm.views.SessionActivity" />
 
         <fragment
             android:id="@+id/map"
             android:name="com.google.android.gms.maps.SupportMapFragment"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="1"
-            tools:context=".mvvm.views.SessionActivity"
-            tools:layout_editor_absoluteX="0dp" />
+            app:layout_constraintBottom_toTopOf="@+id/layoutSession"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:context=".mvvm.views.SessionActivity" />
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/layoutSession"
             android:layout_width="match_parent"
             android:layout_height="150dp"
-            android:background="@color/white">
+            android:background="@color/white"
+            app:layout_constraintBottom_toBottomOf="parent">
 
 
             <TextView
@@ -40,6 +54,7 @@
                 android:layout_marginTop="8dp"
                 android:drawablePadding="8dp"
                 android:hint="@string/hint_distance"
+                android:textColor="@color/black"
                 app:distance="@{viewModel.distance}"
                 app:drawableStartCompat="@drawable/ic_distance"
                 app:layout_constraintStart_toStartOf="parent"
@@ -54,6 +69,7 @@
                 android:layout_marginEnd="16dp"
                 android:drawablePadding="8dp"
                 android:hint="@string/hint_duration"
+                android:textColor="@color/black"
                 app:drawableStartCompat="@drawable/ic_duration"
                 app:duration="@{viewModel.duration}"
                 app:layout_constraintRight_toRightOf="parent"
@@ -67,6 +83,7 @@
                 android:layout_marginTop="8dp"
                 android:drawablePadding="8dp"
                 android:hint="@string/hint_avg_speed"
+                android:textColor="@color/black"
                 app:drawableStartCompat="@drawable/ic_avg_speed"
                 app:layout_constraintLeft_toRightOf="@id/tvDistance"
                 app:layout_constraintRight_toLeftOf="@id/tvDuration"
@@ -92,9 +109,10 @@
                 android:layout_marginEnd="32dp"
                 android:layout_marginBottom="24dp"
                 android:src="@drawable/ic_restart"
+                app:hide="@{viewModel.sessionState != SessionState.PAUSE}"
                 map:layout_constraintBottom_toBottomOf="@id/imvAction"
                 map:layout_constraintRight_toLeftOf="@id/imvAction"
                 tools:ignore="ContentDescription" />
         </androidx.constraintlayout.widget.ConstraintLayout>
-    </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

@@ -16,7 +16,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.TrackMe"
         android:name=".MainApplication">
-        <activity android:name=".mvvm.views.SessionsHistoryActivity" />
+
         <!--
              The API key for Google Maps-based APIs is defined as a string resource.
              (See the file "res/values/google_maps_api.xml").
@@ -34,14 +34,17 @@
 
         <activity
             android:name=".mvvm.views.SessionActivity"
-            android:label="@string/title_activity_maps">
+            android:label="@string/title_activity_maps" >
+
+        </activity>
+        <activity android:name=".mvvm.views.SessionsHistoryActivity"
+            android:launchMode="singleInstance">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
 <!--        <service-->
 <!--            android:name="MyNavigationService"-->
 <!--            android:foregroundServiceType="location" >-->
