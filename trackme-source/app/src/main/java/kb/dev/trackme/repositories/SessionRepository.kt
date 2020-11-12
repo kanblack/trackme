@@ -1,11 +1,11 @@
 package kb.dev.trackme.repositories
 
-import kb.dev.trackme.mvvm.Session
+import androidx.paging.PagingSource
+import kb.dev.trackme.database.Session
 
 interface SessionRepository {
-    fun startNewSession(): Session
     fun stopSession(sessionId: String)
     fun pauseSession(sessionId: String)
-    fun getSessions(offset: Int, limit: Int)
-    fun saveNewSession(distance: Double, duration: Double, avgVelocity: Double)
+    fun getSessions(): PagingSource<Int, Session>
+    suspend fun saveNewSession(session: Session)
 }

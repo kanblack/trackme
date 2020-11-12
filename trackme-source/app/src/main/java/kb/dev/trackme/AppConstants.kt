@@ -5,8 +5,3 @@ enum class SessionState{
     PAUSE,
     COMPLETE
 }
-
-enum class DistanceUnit{
-    METTER,
-    KILOMETTER
-}

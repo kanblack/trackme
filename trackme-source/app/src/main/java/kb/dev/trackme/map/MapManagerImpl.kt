@@ -4,6 +4,7 @@ import android.Manifest
 import android.app.Activity
 import android.content.pm.PackageManager
 import android.location.Location
+import android.location.LocationManager
 import android.os.Bundle
 import android.os.Looper
 import android.util.Log
@@ -15,10 +16,21 @@ import com.google.android.gms.location.*
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.model.*
+import kb.dev.trackme.ImageStorage
+import kb.dev.trackme.R
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
+import kotlin.math.ln
 
 
-class MapManagerImpl : MapManager {
+class MapManagerImpl(private val imageStorage: ImageStorage) : MapManager {
     private var mMap: GoogleMap? = null
+    private var mMapToSave: GoogleMap? = null
+
     private var cameraPosition: CameraPosition? = null
     private val defaultLocation = LatLng(21.027763, 105.834160)
     private var locationPermissionGranted = false
@@ -26,6 +38,7 @@ class MapManagerImpl : MapManager {
     private var mFusedLocationProviderClient: FusedLocationProviderClient? = null
     private val distance = MutableLiveData(0.0)
     private val route = arrayListOf<LatLng>()
+    private var startLatLng: LatLng? = null
 
     override fun attachMap(activity: Activity, googleMap: GoogleMap) {
         mMap = googleMap
@@ -41,6 +54,11 @@ class MapManagerImpl : MapManager {
         requestLocationUpdate()
     }
 
+    override fun attachMapToSave(activity: Activity, googleMap: GoogleMap) {
+        mMapToSave = googleMap
+
+    }
+
     override fun updateDatePermissionResult(
         activity: Activity,
         requestCode: Int,
@@ -52,10 +70,10 @@ class MapManagerImpl : MapManager {
             PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION -> {
                 if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     locationPermissionGranted = true
+                    updateLocationUI(activity)
                 }
             }
         }
-        updateLocationUI(activity)
     }
 
     override fun saveMapState(outState: Bundle) {
@@ -80,22 +98,24 @@ class MapManagerImpl : MapManager {
 
     private fun onNewLocation(lastLocation: Location?) {
         lastLocation?.let {
-            val distanceToLastLocation = it.distanceTo(lastKnownLocation).toDouble()
-            distance.postValue(distance.value?.plus(distanceToLastLocation))
-            lastKnownLocation = lastLocation
-            val lastLocationInLatLng = LatLng(lastLocation.latitude, lastLocation.longitude)
-            if (distanceToLastLocation > 5 || route.isEmpty()) {
-                route.add(lastLocationInLatLng)
+            if (lastKnownLocation == null) {
+                lastKnownLocation = lastLocation
             }
-            moveCamera(lastLocationInLatLng)
-            requestUpdateRoute()
+            val distanceToLastLocation = it.distanceTo(lastKnownLocation).toDouble()
+            if (distanceToLastLocation > 1) {
+                distance.postValue(distance.value?.plus(distanceToLastLocation))
+                lastKnownLocation = lastLocation
+                val lastLocationInLatLng = LatLng(lastLocation.latitude, lastLocation.longitude)
+                route.add(lastLocationInLatLng)
+                moveCamera(lastLocationInLatLng)
+                requestUpdateRoute()
+            }
         }
     }
 
-    var currentPolyline: Polyline? = null
+    private var currentPolyline: Polyline? = null
 
     private fun requestUpdateRoute() {
-        Log.e("route", "${route.size}")
         currentPolyline?.remove()
         currentPolyline = mMap?.addPolyline(PolylineOptions().add(*route.toTypedArray()))
     }
@@ -127,6 +147,72 @@ class MapManagerImpl : MapManager {
 
     override fun stopUpdateLocation() {
         mFusedLocationProviderClient?.removeLocationUpdates(mLocationCallback)
+    }
+
+    override suspend fun getRoute(): String {
+        return suspendCoroutine { ct ->
+            val imageName = System.currentTimeMillis().toString()
+            val builder = LatLngBounds.Builder()
+            route.forEach {
+                builder.include(it)
+            }
+
+            val bounds = builder.build()
+
+            lastKnownLocation?.let {
+                GlobalScope.launch(Dispatchers.Main) {
+                    startLatLng?.let { startLatLng ->
+
+
+                        mMapToSave?.addMarker(
+                            MarkerOptions().position(
+                                startLatLng
+                            )
+                                .icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_start_marker))
+                        )
+                        lastKnownLocation?.let { lastKnownLocation ->
+                            mMapToSave?.addMarker(
+                                MarkerOptions().position(
+                                    LatLng(lastKnownLocation.latitude, lastKnownLocation.longitude)
+                                )
+                                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_target_flag))
+                            )
+                        }
+                    }
+                    mMapToSave?.setLatLngBoundsForCameraTarget(bounds)
+
+                    val loc1 = Location(LocationManager.GPS_PROVIDER).apply {
+                        latitude = bounds.northeast.latitude
+                        longitude = bounds.northeast.longitude
+                    }
+                    val loc2 = Location(LocationManager.GPS_PROVIDER).apply {
+                        latitude = bounds.southwest.latitude
+                        longitude = bounds.southwest.longitude
+                    }
+
+                    val radius = loc1.distanceTo(loc2)
+                    val scale = radius / 370
+                    val zoomLevel = (16 - ln(scale) / ln(2.0)).toFloat()
+
+                    Log.e("zoom level", "zoomLevel: $zoomLevel - radius: $radius")
+
+                    mMapToSave?.moveCamera(
+                        CameraUpdateFactory
+                            .newLatLngZoom(bounds.center, zoomLevel)
+                    )
+                    mMapToSave?.addPolyline(PolylineOptions().add(*route.toTypedArray()))
+                    delay(1000)
+                    mMapToSave?.snapshot { snapshotBitmap ->
+                        ct.resume(imageStorage.storeImage(snapshotBitmap, imageName))
+                    }
+                }
+
+            }
+        }
+
+//        return Gson().toJson(route.map {
+//            kb.dev.trackme.mvvm.Location(it.latitude, it.longitude)
+//        })
     }
 
     private fun updateLocationUI(activity: Activity) {
@@ -170,7 +256,12 @@ class MapManagerImpl : MapManager {
                     if (task.isSuccessful) {
                         lastKnownLocation = task.result
                         lastKnownLocation?.let {
-                            moveCamera(LatLng(it.latitude, it.longitude))
+                            startLatLng = LatLng(it.latitude, it.longitude)
+                            startLatLng?.let { startLatLng ->
+                                route.add(startLatLng)
+                                moveCamera(startLatLng)
+                                markStartLocation(startLatLng)
+                            }
                         }
                     } else {
                         Log.d(TAG, "Current location is null. Using defaults.")
@@ -185,11 +276,22 @@ class MapManagerImpl : MapManager {
         }
     }
 
-    private fun moveCamera(location: LatLng) {
-        mMap?.moveCamera(
-            CameraUpdateFactory
-                .newLatLngZoom(location, DEFAULT_ZOOM.toFloat())
+    private fun markStartLocation(lastKnownLocation: LatLng) {
+        mMap?.addMarker(
+            MarkerOptions().position(
+                lastKnownLocation
+            ).icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_start_marker))
         )
+    }
+
+    private fun moveCamera(location: LatLng) {
+//        GoogleMap.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 100), 2000, null)
+        GlobalScope.launch(Dispatchers.Main) {
+            mMap?.moveCamera(
+                CameraUpdateFactory
+                    .newLatLngZoom(location, DEFAULT_ZOOM.toFloat())
+            )
+        }
     }
 
     private fun createLocationRequest(): LocationRequest {
@@ -204,7 +306,7 @@ class MapManagerImpl : MapManager {
         private val TAG = MapManager::class.java.simpleName
         private const val DEFAULT_ZOOM = 15
         private const val PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1
-        private const val UPDATE_INTERVAL_IN_MILLISECONDS = 10000L
+        private const val UPDATE_INTERVAL_IN_MILLISECONDS = 1000L
         private const val FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS =
             UPDATE_INTERVAL_IN_MILLISECONDS / 2
 

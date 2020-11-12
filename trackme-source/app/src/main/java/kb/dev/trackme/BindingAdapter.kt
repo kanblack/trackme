@@ -1,5 +1,6 @@
 package kb.dev.trackme
 
+import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.databinding.BindingAdapter
@@ -19,6 +20,11 @@ fun setSessionButtonState(imv: ImageView, state: SessionState?) {
         }
         else -> imv.setImageDrawable(null)
     }
+}
+
+@BindingAdapter("hide")
+fun hideView(view: View, isHide: Boolean) {
+    view.visibility = if (isHide) View.GONE else View.VISIBLE
 }
 
 @BindingAdapter("distance")
