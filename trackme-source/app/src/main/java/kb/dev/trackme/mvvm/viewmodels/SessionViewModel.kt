@@ -46,10 +46,6 @@ class SessionViewModel(
                 updateVelocity()
             }
         }
-
-        viewModelScope.launch(Dispatchers.Default) {
-            startTimer()
-        }
     }
 
 
