@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:map="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data>
+
+        <variable
+            name="viewModel"
+            type="kb.dev.trackme.mvvm.viewmodels.SessionViewModel" />
+    </data>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <fragment
+            android:id="@+id/map"
+            android:name="com.google.android.gms.maps.SupportMapFragment"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            tools:context=".mvvm.views.SessionActivity"
+            tools:layout_editor_absoluteX="0dp" />
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/layoutSession"
+            android:layout_width="match_parent"
+            android:layout_height="150dp"
+            android:background="@color/white">
+
+
+            <TextView
+                android:id="@+id/tvDistance"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_marginTop="8dp"
+                android:drawablePadding="8dp"
+                android:hint="@string/hint_distance"
+                app:distance="@{viewModel.distance}"
+                app:drawableStartCompat="@drawable/ic_distance"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/tvDuration"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginEnd="16dp"
+                android:drawablePadding="8dp"
+                android:hint="@string/hint_duration"
+                app:drawableStartCompat="@drawable/ic_duration"
+                app:duration="@{viewModel.duration}"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/tvAvgSpeed"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_marginTop="8dp"
+                android:drawablePadding="8dp"
+                android:hint="@string/hint_avg_speed"
+                app:drawableStartCompat="@drawable/ic_avg_speed"
+                app:layout_constraintLeft_toRightOf="@id/tvDistance"
+                app:layout_constraintRight_toLeftOf="@id/tvDuration"
+                app:layout_constraintTop_toTopOf="parent"
+                app:velocity="@{viewModel.avgSpeed}" />
+
+            <ImageView
+                android:id="@+id/imvAction"
+                android:layout_width="75dp"
+                android:layout_height="75dp"
+                android:layout_marginBottom="24dp"
+                app:sessionState="@{viewModel.sessionState}"
+                map:layout_constraintBottom_toBottomOf="parent"
+                map:layout_constraintEnd_toEndOf="parent"
+                map:layout_constraintStart_toStartOf="parent"
+                tools:ignore="ContentDescription" />
+
+            <ImageView
+                android:id="@+id/imvResume"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="32dp"
+                android:layout_marginBottom="24dp"
+                android:src="@drawable/ic_restart"
+                map:layout_constraintBottom_toBottomOf="@id/imvAction"
+                map:layout_constraintRight_toLeftOf="@id/imvAction"
+                tools:ignore="ContentDescription" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </LinearLayout>
+</layout>

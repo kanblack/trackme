@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">TrackMe</string>
+    <string name="title_activity_maps">Map</string>
+    <string name="hint_distance">-- km</string>
+    <string name="hint_duration">--:--:--</string>
+    <string name="hint_avg_speed">-- km/h</string>
+    <string name="tv_avg_speed">%s km/h</string>
+    <string name="tv_duration">%s:%s:%s</string>
+    <string name="tv_distance">%s km</string>
+</resources>
