@@ -20,4 +20,5 @@ interface SessionViewModelState {
     fun onActionButtonClicked()
 
     fun onResumeButtonClicked()
+    fun onActivityResume()
 }

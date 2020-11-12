@@ -2,7 +2,7 @@ package kb.dev.trackme.repositories
 
 import kb.dev.trackme.mvvm.Session
 
-class SessionRepositoryImpl(): SessionRepository{
+class SessionRepositoryImpl : SessionRepository{
     private val sessions = hashMapOf<Long, Session>()
 
     override fun startNewSession(): Session {

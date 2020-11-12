@@ -1,5 +1,6 @@
 package kb.dev.trackme.utils
 
+import android.util.Log
 import java.util.concurrent.TimeUnit
 import kotlin.math.max
 
@@ -13,6 +14,10 @@ fun convertMeterToKilometer(meter: Double): Double {
 
 fun getVelocity(durationInMills: Double, distanceInMeter: Double): Double {
     val durationByHour = convertMillisToHour(durationInMills.toLong())
+
     val distanceInKilometer = convertMeterToKilometer(distanceInMeter)
-    return distanceInKilometer / max(durationByHour, 1.0)
+    val velocity = distanceInKilometer /( if (durationByHour == 0.0) 1.0 else durationByHour)
+    Log.e("getVelocity","$durationInMills ms- $durationByHour hour - $distanceInMeter m - $distanceInKilometer km - $velocity km/h")
+
+    return velocity
 }
