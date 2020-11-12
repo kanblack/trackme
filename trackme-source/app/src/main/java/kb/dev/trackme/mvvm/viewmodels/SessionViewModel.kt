@@ -2,7 +2,6 @@ package kb.dev.trackme.mvvm.viewmodels
 
 import android.app.Activity
 import android.os.Bundle
-import android.util.Log
 import androidx.lifecycle.*
 import com.google.android.gms.maps.GoogleMap
 import kb.dev.trackme.SessionState
@@ -10,7 +9,6 @@ import kb.dev.trackme.map.MapManager
 import kb.dev.trackme.repositories.SessionRepository
 import kb.dev.trackme.utils.getVelocity
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlin.math.max
@@ -23,32 +21,45 @@ class SessionViewModel(
 ) :
     ViewModel(), SessionViewModelState {
     val sessionState = MutableLiveData(SessionState.ACTIVE)
-    val distance = MutableLiveData(0.0)//metter
+    val distance = mapManager.getDistance()
     val duration = MutableLiveData(0.0)//millisecond
-    var velocityCount = 0
-    var totalVelocity = 0.0
     val avgSpeed = MutableLiveData(0.0)
+
+    private var velocityCount = 0
+    private var totalVelocity = 0.0
+    private var isTimerRunning = false
 
     init {
         viewModelScope.launch(Dispatchers.Default) {
             sessionState.asFlow().debounce(1000).collectLatest { state: SessionState? ->
-                if (state == SessionState.COMPLETE) {
-                    saveSession()
-                    releaseCurrentSession()
-                } else if(state == SessionState.ACTIVE){
-                    startTimer()
+                when (state) {
+                    SessionState.COMPLETE -> {
+                        saveSession()
+                        releaseCurrentSession()
+                    }
+                    SessionState.ACTIVE -> {
+                        requestLocationUpdate()
+                        startTimer()
+                    }
+                    SessionState.PAUSE -> {
+                        requestStopLocationUpdate()
+                    }
                 }
-            }
-        }
-
-        viewModelScope.launch {
-            duration.asFlow().collect {
-                updateVelocity()
             }
         }
 
         viewModelScope.launch(Dispatchers.Default) {
             startTimer()
+        }
+    }
+
+    private fun requestStopLocationUpdate() {
+        mapManager.stopUpdateLocation()
+    }
+
+    private fun requestLocationUpdate() {
+        viewModelScope.launch(Dispatchers.Main) {
+            mapManager.requestLocationUpdate()
         }
     }
 
@@ -60,7 +71,9 @@ class SessionViewModel(
         val duration = duration.value ?: 0.0
         val distance = distance.value ?: 0.0
         totalVelocity += getVelocity(duration, distance)
-        velocityCount++
+        if(totalVelocity > 0) {
+            velocityCount++
+        }
         updateAvgSpeed()
     }
 
@@ -70,14 +83,18 @@ class SessionViewModel(
     }
 
     private suspend fun startTimer() {
+        if(isTimerRunning){
+            return
+        }
+        isTimerRunning = true
         val timerIntervalInMills = 500L
-        if (sessionState.value == SessionState.ACTIVE) {
+        while (sessionState.value == SessionState.ACTIVE){
             val updateDuration = (duration.value ?: 0.0) + timerIntervalInMills
             duration.postValue(updateDuration)
             updateVelocity()
             delay(timerIntervalInMills)
-            startTimer()
         }
+        isTimerRunning = false
     }
 
     private fun saveSession() {
@@ -126,5 +143,9 @@ class SessionViewModel(
         sessionState.postValue(
             currentState
         )
+    }
+
+    override fun onActivityResume() {
+        mapManager.requestLocationUpdate()
     }
 }

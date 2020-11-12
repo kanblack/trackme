@@ -30,6 +30,11 @@ class SessionActivity : AppCompatActivity(), OnMapReadyCallback {
         setupInteraction()
     }
 
+    override fun onResume() {
+        super.onResume()
+        viewModel.onActivityResume()
+    }
+
     private fun setupInteraction() {
         findViewById<ImageView>(R.id.imvAction).setOnClickListener {
             viewModel.onActionButtonClicked()
