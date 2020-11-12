@@ -17,7 +17,5 @@ fun getVelocity(durationInMills: Double, distanceInMeter: Double): Double {
 
     val distanceInKilometer = convertMeterToKilometer(distanceInMeter)
     val velocity = distanceInKilometer /( if (durationByHour == 0.0) 1.0 else durationByHour)
-    Log.e("getVelocity","$durationInMills ms- $durationByHour hour - $distanceInMeter m - $distanceInKilometer km - $velocity km/h")
-
     return velocity
 }
