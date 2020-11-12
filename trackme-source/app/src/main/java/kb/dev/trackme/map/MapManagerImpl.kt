@@ -14,8 +14,7 @@ import androidx.lifecycle.MutableLiveData
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
-import com.google.android.gms.maps.model.CameraPosition
-import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.*
 
 
 class MapManagerImpl : MapManager {
@@ -26,6 +25,7 @@ class MapManagerImpl : MapManager {
     private var lastKnownLocation: Location? = null
     private var mFusedLocationProviderClient: FusedLocationProviderClient? = null
     private val distance = MutableLiveData(0.0)
+    private val route = arrayListOf<LatLng>()
 
     override fun attachMap(activity: Activity, googleMap: GoogleMap) {
         mMap = googleMap
@@ -80,9 +80,24 @@ class MapManagerImpl : MapManager {
 
     private fun onNewLocation(lastLocation: Location?) {
         lastLocation?.let {
-            distance.postValue(distance.value?.plus(it.distanceTo(lastKnownLocation).toDouble()))
+            val distanceToLastLocation = it.distanceTo(lastKnownLocation).toDouble()
+            distance.postValue(distance.value?.plus(distanceToLastLocation))
             lastKnownLocation = lastLocation
+            val lastLocationInLatLng = LatLng(lastLocation.latitude, lastLocation.longitude)
+            if (distanceToLastLocation > 5 || route.isEmpty()) {
+                route.add(lastLocationInLatLng)
+            }
+            moveCamera(lastLocationInLatLng)
+            requestUpdateRoute()
         }
+    }
+
+    var currentPolyline: Polyline? = null
+
+    private fun requestUpdateRoute() {
+        Log.e("route", "${route.size}")
+        currentPolyline?.remove()
+        currentPolyline = mMap?.addPolyline(PolylineOptions().add(*route.toTypedArray()))
     }
 
     override fun requestLocationUpdate() {
@@ -147,9 +162,6 @@ class MapManagerImpl : MapManager {
         }
     }
 
-    /**
-     * Gets the current location of the device, and positions the map's camera.
-     */
     private fun getDeviceLocation(activity: Activity) {
         try {
             if (locationPermissionGranted) {

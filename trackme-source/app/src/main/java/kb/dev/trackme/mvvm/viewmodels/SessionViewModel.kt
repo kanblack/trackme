@@ -47,10 +47,6 @@ class SessionViewModel(
                 }
             }
         }
-
-        viewModelScope.launch(Dispatchers.Default) {
-            startTimer()
-        }
     }
 
     private fun requestStopLocationUpdate() {
