@@ -4,7 +4,6 @@ import android.app.Activity
 import android.location.Location
 import android.location.LocationManager
 import android.util.Log
-import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
@@ -12,6 +11,7 @@ import com.google.android.gms.maps.model.*
 import kb.dev.trackme.ImageStorage
 import kb.dev.trackme.R
 import kb.dev.trackme.SessionEvent
+import kb.dev.trackme.utils.SharePreferenceUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
@@ -24,12 +24,13 @@ import kotlin.coroutines.suspendCoroutine
 import kotlin.math.ln
 
 
-class MapManagerImpl(private val imageStorage: ImageStorage) : MapManager {
-    private var locationPermissionGranted: Boolean = false
+class MapManagerImpl(
+    private val imageStorage: ImageStorage,
+    private val sharePreferenceUtils: SharePreferenceUtils
+) : MapManager {
     private var mMap: GoogleMap? = null
     private var mMapToSave: GoogleMap? = null
     private var startLatLng: LatLng? = null
-    private var cameraPosition: CameraPosition? = null
     private var session = MutableLiveData<SessionEvent>()
     private var currentPolyline: Polyline? = null
 
@@ -40,6 +41,11 @@ class MapManagerImpl(private val imageStorage: ImageStorage) : MapManager {
     override fun attachMap(activity: Activity, googleMap: GoogleMap) {
         mMap = googleMap
         updateLocationUI()
+        startLatLng?.let {
+            moveCamera(it)
+            markStartLocation(it)
+        }
+
     }
 
     override fun attachMapToSave(activity: Activity, googleMap: GoogleMap) {
@@ -53,15 +59,16 @@ class MapManagerImpl(private val imageStorage: ImageStorage) : MapManager {
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     fun onMessageEvent(event: SessionEvent) {
-        Log.e("@@@","event")
-        if (session.value == null) {
-            event.startLatLng?.let { updateUIStartLocation(it) }
+        if (startLatLng == null) {
+            startLatLng = event.startLatLng
+            startLatLng?.let { updateUIStartLocation(it) }
         }
         session.postValue(event)
         event.lastKnowLocation?.let { lastLocation ->
             val lastLocationInLatLng = LatLng(lastLocation.latitude, lastLocation.longitude)
             moveCamera(lastLocationInLatLng)
         }
+        updateLocationUI()
         requestUpdateRoute(event.route)
     }
 
@@ -100,7 +107,7 @@ class MapManagerImpl(private val imageStorage: ImageStorage) : MapManager {
                             )
                                 .icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_start_marker))
                         )
-                        lastKnownLocation?.let { lastKnownLocation ->
+                        lastKnownLocation.let { lastKnownLocation ->
                             mMapToSave?.addMarker(
                                 MarkerOptions().position(
                                     LatLng(
@@ -149,8 +156,13 @@ class MapManagerImpl(private val imageStorage: ImageStorage) : MapManager {
             return
         }
         try {
-//            mMap?.isMyLocationEnabled = true
-//            mMap?.uiSettings?.isMyLocationButtonEnabled = true
+            if (sharePreferenceUtils.getGrantPermissionStatus()) {
+                mMap?.isMyLocationEnabled = true
+                mMap?.uiSettings?.isMyLocationButtonEnabled = true
+            } else {
+                mMap?.isMyLocationEnabled = false
+                mMap?.uiSettings?.isMyLocationButtonEnabled = false
+            }
         } catch (e: SecurityException) {
             Log.e("Exception: %s", e.message, e)
         }
@@ -166,10 +178,10 @@ class MapManagerImpl(private val imageStorage: ImageStorage) : MapManager {
         }
     }
 
-    private fun markStartLocation(lastKnownLocation: LatLng) {
+    private fun markStartLocation(startLatLng: LatLng) {
         mMap?.addMarker(
             MarkerOptions().position(
-                lastKnownLocation
+                startLatLng
             ).icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_start_marker))
         )
     }
@@ -185,9 +197,5 @@ class MapManagerImpl(private val imageStorage: ImageStorage) : MapManager {
 
     companion object {
         private const val DEFAULT_ZOOM = 15
-
-        // Keys for storing activity state.
-        private const val KEY_CAMERA_POSITION = "camera_position"
-        private const val KEY_LOCATION = "location"
     }
 }

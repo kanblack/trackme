@@ -38,7 +38,7 @@ class LocationUpdatesService : Service() {
     private var totalVelocity = 0.0
     private var sessionState: SessionState? = null
     private var duration = 0.0
-    private lateinit var mLocationRequest: LocationRequest
+    private var mLocationRequest: LocationRequest
 
     private var mFusedLocationProviderClient: FusedLocationProviderClient? = null
     private val mLocationCallback = object : LocationCallback() {
@@ -155,6 +155,7 @@ class LocationUpdatesService : Service() {
             else -> EXTRA_REQUEST_START_SESSION
         }
         onStartSession(type)
+        getLastLocation()
     }
 
     private fun startJob() {
@@ -268,7 +269,6 @@ class LocationUpdatesService : Service() {
                 val lastLocationInLatLng = LatLng(location.latitude, location.longitude)
                 route.add(lastLocationInLatLng)
                 notifySessionToApp()
-                Log.e(TAG, "${route.size}")
             }
         }
     }

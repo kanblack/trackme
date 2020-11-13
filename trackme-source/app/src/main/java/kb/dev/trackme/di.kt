@@ -21,7 +21,7 @@ val appModule = module {
     viewModel { SessionViewModel(get(), get()) }
     viewModel { SessionsHistoryViewModel(get()) }
 
-    factory<MapManager> { MapManagerImpl(get()) }
+    factory<MapManager> { MapManagerImpl(get(), get()) }
 
     single { SharePreferenceUtils(androidContext()) }
     single { TrackMeRoomDatabase.getDatabase(get()).sessionDao() }

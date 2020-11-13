@@ -51,8 +51,10 @@ class SessionActivity : AppCompatActivity() {
                 applicationContext, Manifest.permission.ACCESS_FINE_LOCATION
             ) == PackageManager.PERMISSION_GRANTED
         ) {
+            sharedPreferences.saveGrantPermissionStatus(true)
             startUpdateLocationService()
         } else {
+            sharedPreferences.saveGrantPermissionStatus(false)
             ActivityCompat.requestPermissions(
                 this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
                 PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION

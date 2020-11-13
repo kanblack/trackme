@@ -9,10 +9,6 @@ enum class SessionState {
     COMPLETE
 }
 
-enum class AppEvent{
-    PERMISSION_GRANTED
-}
-
 const val EXTRA_REQUEST_PAUSE_SESSION = "EXTRA_REQUEST_PAUSE_SESSION"
 const val EXTRA_REQUEST_RESUME_SESSION = "EXTRA_REQUEST_RESUME_SESSION"
 const val EXTRA_REQUEST_START_SESSION = "EXTRA_REQUEST_START_SESSION"
@@ -30,5 +26,3 @@ data class SessionEvent(
     val avgSpeed: Double,
     val duration: Double
 )
-
-data class MessageEvent(val event: AppEvent)
