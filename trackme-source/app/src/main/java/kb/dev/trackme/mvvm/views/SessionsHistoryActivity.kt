@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
@@ -15,16 +16,15 @@ import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import kb.dev.trackme.R
+import kb.dev.trackme.*
 import kb.dev.trackme.database.Session
 import kb.dev.trackme.mvvm.viewmodels.SessionsHistoryViewModel
-import kb.dev.trackme.setDistance
-import kb.dev.trackme.setDuration
-import kb.dev.trackme.setVelocity
+import kb.dev.trackme.utils.SharePreferenceUtils
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import org.koin.android.ext.android.inject
 import org.koin.android.viewmodel.ext.android.viewModel
 import java.io.File
 
@@ -33,6 +33,7 @@ import java.io.File
 class SessionsHistoryActivity : AppCompatActivity() {
     private val pagingAdapter = SessionAdapter(SessionComparator)
     private val viewModel: SessionsHistoryViewModel by viewModel()
+    private val sharedPreferences: SharePreferenceUtils by inject()
 
     object SessionComparator : DiffUtil.ItemCallback<Session>() {
         override fun areItemsTheSame(oldItem: Session, newItem: Session): Boolean {
@@ -46,20 +47,27 @@ class SessionsHistoryActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_sessions_history)
-        setupRecycleView()
-        setupInteraction()
+        val lastSessionState = sharedPreferences.getLastSessionSate()
+        if (lastSessionState != null && lastSessionState != SessionState.COMPLETE.toString()) {
+            startActivity(Intent(this, SessionActivity::class.java))
+            finish()
+        } else {
+            setContentView(R.layout.activity_sessions_history)
+            setupRecycleView()
+            setupInteraction()
 
-        lifecycleScope.launch {
-            viewModel.flow.collectLatest { pagingData ->
-                pagingAdapter.submitData(pagingData)
+            lifecycleScope.launch {
+                viewModel.flow.collectLatest { pagingData ->
+                    pagingAdapter.submitData(pagingData)
+                }
             }
         }
     }
 
     private fun setupInteraction() {
-        findViewById<Button>(R.id.btnRecord).setOnClickListener {
+        findViewById<ImageView>(R.id.btnRecord).setOnClickListener {
             startActivity(Intent(this, SessionActivity::class.java))
+            finish()
         }
     }
 

@@ -9,24 +9,6 @@ import com.google.android.gms.maps.model.LatLng
 interface MapManager {
     fun attachMap(activity: Activity, googleMap: GoogleMap)
     fun attachMapToSave(activity: Activity, googleMap: GoogleMap)
-
-    fun updateDatePermissionResult(
-        activity: Activity,
-        requestCode: Int,
-        permissions: Array<String>,
-        grantResults: IntArray
-    )
-
-    fun saveMapState(outState: Bundle)
-
-    fun restoreMapState(savedInstanceState: Bundle)
-
-    fun requestLocationUpdate()
-
-    fun getDistance(): LiveData<Double>
-
-    fun stopUpdateLocation()
-
+    fun release()
     suspend fun getRoute(): String
-
 }
