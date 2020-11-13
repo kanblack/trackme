@@ -290,6 +290,10 @@ class LocationUpdatesService : Service() {
             )
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        Log.e(TAG, "onDestroy")
+    }
 
     companion object {
         private const val MINIMUM_DISTANCE = 5

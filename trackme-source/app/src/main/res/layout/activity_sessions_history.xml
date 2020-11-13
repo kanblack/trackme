@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="@color/main_bg"
+    android:background="@color/white"
     android:gravity="center_horizontal"
     tools:context=".mvvm.views.SessionsHistoryActivity">
 
@@ -14,9 +14,11 @@
         android:layout_height="0dp"
         android:layout_weight="1"/>
 
-    <Button
+    <ImageView
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"
         android:id="@+id/btnRecord"
-        android:text="Record"
+        android:src="@drawable/ic_record"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"/>
 </LinearLayout>
