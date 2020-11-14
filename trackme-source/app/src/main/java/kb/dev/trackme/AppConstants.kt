@@ -24,5 +24,6 @@ data class SessionEvent(
     val startLatLng: LatLng?,
     val lastKnowLocation: Location?,
     val avgSpeed: Double,
-    val duration: Double
+    val duration: Double,
+    val currentSpeed: Double
 )

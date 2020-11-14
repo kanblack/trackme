@@ -10,5 +10,5 @@ interface MapManager {
     fun attachMap(activity: Activity, googleMap: GoogleMap)
     fun attachMapToSave(activity: Activity, googleMap: GoogleMap)
     fun release()
-    suspend fun getRoute(): String
+    suspend fun getRouteImage(): String
 }

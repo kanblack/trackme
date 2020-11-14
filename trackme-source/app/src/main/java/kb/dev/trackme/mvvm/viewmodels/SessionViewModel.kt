@@ -1,26 +1,22 @@
 package kb.dev.trackme.mvvm.viewmodels
 
 import android.app.Activity
-import android.os.Bundle
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asFlow
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.maps.GoogleMap
-import com.google.android.gms.maps.model.LatLng
 import kb.dev.trackme.SessionEvent
 import kb.dev.trackme.SessionState
 import kb.dev.trackme.SingleLiveEvent
 import kb.dev.trackme.database.Session
 import kb.dev.trackme.map.MapManager
 import kb.dev.trackme.repositories.SessionRepository
-import kb.dev.trackme.utils.getVelocity
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collect
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
-import kotlin.math.max
 
 @ExperimentalCoroutinesApi
 @FlowPreview
@@ -29,10 +25,12 @@ class SessionViewModel(
     private val mapManager: MapManager
 ) :
     ViewModel(), SessionViewModelState {
+     val isPermissionGranted = MutableLiveData(true)
     val sessionState = MutableLiveData(SessionState.ACTIVE)
     val distance = MutableLiveData(0.0)
     val duration = MutableLiveData(0.0)//millisecond
-    val avgSpeed = MutableLiveData(0.0)
+    val currentSpeed = MutableLiveData(0.0)
+    private val avgSpeed = MutableLiveData(0.0)
 
     private val saveSessionCompleteEvent = SingleLiveEvent<Boolean>()
     private val isSavingSession = MutableLiveData(false)
@@ -89,7 +87,7 @@ class SessionViewModel(
                 createdAt = System.currentTimeMillis(),
                 distance = distance.toLong(),
                 duration = duration.toLong(),
-                route = mapManager.getRoute()
+                route = mapManager.getRouteImage()
             )
         )
     }
@@ -123,9 +121,14 @@ class SessionViewModel(
         mapManager.attachMapToSave(activity, googleMap)
     }
 
+    override fun onPermissionResult(status: Boolean) {
+        isPermissionGranted.postValue(status)
+    }
+
     @Subscribe(threadMode = ThreadMode.BACKGROUND)
     fun onMessageEvent(event: SessionEvent) {
         distance.postValue(event.distance)
+        currentSpeed.postValue(event.currentSpeed)
         avgSpeed.postValue(event.avgSpeed)
         duration.postValue(event.duration)
         sessionState.postValue(event.sessionState)

@@ -39,10 +39,55 @@
             tools:context=".mvvm.views.SessionActivity" />
 
         <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/layoutNoPermision"
+            hide="@{viewModel.isPermissionGranted}"
+            android:layout_width="match_parent"
+            android:layout_height="150dp"
+            android:background="@color/white"
+            app:layout_constraintBottom_toBottomOf="parent">
+
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_marginTop="8dp"
+                android:drawablePadding="8dp"
+                android:text="@string/the_session_can_t_record_without_location_permission"
+                android:textColor="@color/black"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_goneMarginLeft="16dp" />
+
+            <Button
+                android:id="@+id/btnCancelSession"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_marginBottom="16dp"
+                android:text="@string/cancel_session"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent" />
+
+            <Button
+                android:id="@+id/btnGrantPermission"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="16dp"
+                android:layout_marginBottom="16dp"
+                android:text="@string/grant_permission"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            hide="@{!viewModel.isPermissionGranted}"
             android:id="@+id/layoutSession"
             android:layout_width="match_parent"
             android:layout_height="150dp"
             android:background="@color/white"
+            android:visibility="gone"
             app:layout_constraintBottom_toBottomOf="parent">
 
 
@@ -84,17 +129,17 @@
                 android:drawablePadding="8dp"
                 android:hint="@string/hint_avg_speed"
                 android:textColor="@color/black"
-                app:drawableStartCompat="@drawable/ic_avg_speed"
+                app:drawableStartCompat="@drawable/ic_speed"
                 app:layout_constraintLeft_toRightOf="@id/tvDistance"
                 app:layout_constraintRight_toLeftOf="@id/tvDuration"
                 app:layout_constraintTop_toTopOf="parent"
-                app:velocity="@{viewModel.avgSpeed}" />
+                app:velocity="@{viewModel.currentSpeed}" />
 
             <ProgressBar
-                app:hide="@{viewModel.sessionState != SessionState.COMPLETE}"
                 android:layout_width="75dp"
                 android:layout_height="75dp"
                 android:layout_marginBottom="8dp"
+                app:hide="@{viewModel.sessionState != SessionState.COMPLETE}"
                 map:layout_constraintBottom_toBottomOf="parent"
                 map:layout_constraintEnd_toEndOf="parent"
                 map:layout_constraintStart_toStartOf="parent" />

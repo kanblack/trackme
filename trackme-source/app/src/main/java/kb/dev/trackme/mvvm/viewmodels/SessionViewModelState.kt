@@ -13,4 +13,5 @@ interface SessionViewModelState {
     fun onResumeButtonClicked()
 
     fun onAttachMapToSave(activity: Activity, googleMap: GoogleMap)
+    fun onPermissionResult(status: Boolean)
 }
