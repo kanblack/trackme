@@ -1,8 +1,10 @@
 package kb.dev.trackme.services
 
+import android.Manifest
 import android.app.*
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Color
 import android.location.Location
 import android.os.Build
@@ -10,6 +12,7 @@ import android.os.IBinder
 import android.os.Looper
 import android.util.Log
 import androidx.annotation.RequiresApi
+import androidx.core.content.ContextCompat
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.model.LatLng
 import kb.dev.trackme.*
@@ -26,6 +29,7 @@ import java.util.concurrent.TimeUnit
 
 
 class LocationUpdatesService : Service() {
+    private var currentSpeed: Double = 0.0
     private val sharedPreferences: SharePreferenceUtils by inject()
 
     private var avgSpeed: Double = 0.0
@@ -44,6 +48,7 @@ class LocationUpdatesService : Service() {
     private val mLocationCallback = object : LocationCallback() {
         override fun onLocationResult(locationResult: LocationResult?) {
             super.onLocationResult(locationResult)
+            Log.e(TAG, "onLocationResult")
             onNewLocation(locationResult?.lastLocation)
         }
     }
@@ -54,11 +59,22 @@ class LocationUpdatesService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        Log.e(TAG, "onCreate")
-        getNotification()?.let {
-            startForeground(1, it)
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+            == PackageManager.PERMISSION_GRANTED
+        ) {
+            Log.e(TAG, "create")
+            try {
+                getNotification()?.let {
+                    startForeground(1, it)
+                }
+                mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }else {
+            stopSelf()
+            stopForeground(true)
         }
-        mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
     }
 
     private fun getNotification(): Notification? {
@@ -77,9 +93,8 @@ class LocationUpdatesService : Service() {
                 }
 
             return Notification.Builder(this, channelId)
-                .setContentTitle("Request update location")
-                .setContentText("Workout recording ...")
-                .setSmallIcon(R.mipmap.ic_launcher)
+                .setContentTitle("Your workout session is active")
+                .setSmallIcon(R.drawable.ic_speed)
                 .setContentIntent(pendingIntent)
                 .setTicker("ticker")
                 .build()
@@ -105,41 +120,52 @@ class LocationUpdatesService : Service() {
     }
 
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
-        val type = intent.getStringExtra("type")
-        onStartSession(type)
-        return START_STICKY
+        Log.e(TAG, "onStartCommand")
+        try {
+            val type = intent.getStringExtra("type")
+            onStartSession(type)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        return START_NOT_STICKY
     }
 
     private fun onStartSession(type: String?) {
-        when (type) {
-            EXTRA_REQUEST_START_SESSION -> {
-                onRequestStartSession()
-            }
-            EXTRA_REQUEST_PAUSE_SESSION -> {
-                requestStopLocationUpdates()
-                sessionState = SessionState.PAUSE
-                cancelJob()
-            }
-            EXTRA_REQUEST_RESUME_SESSION -> {
-                requestLocationUpdates()
-                sessionState = SessionState.ACTIVE
-                startJob()
-            }
-            EXTRA_REQUEST_COMPLETE_SESSION -> {
-                sessionState = SessionState.COMPLETE
-                cancelJob()
-                requestStopLocationUpdates()
-                stopForeground(true)
-                stopSelf()
-            }
-            else -> {
-                if (sessionState == null) {
-                    restart()
+        try {
+            when (type) {
+                EXTRA_REQUEST_START_SESSION -> {
+                    onRequestStartSession()
                 }
-                notifySessionToApp()
+                EXTRA_REQUEST_PAUSE_SESSION -> {
+                    requestStopLocationUpdates()
+                    sessionState = SessionState.PAUSE
+                    cancelJob()
+                }
+                EXTRA_REQUEST_RESUME_SESSION -> {
+                    requestLocationUpdates()
+                    sessionState = SessionState.ACTIVE
+                    startJob()
+                }
+                EXTRA_REQUEST_COMPLETE_SESSION -> {
+                    sessionState = SessionState.COMPLETE
+                    cancelJob()
+                    requestStopLocationUpdates()
+                    stopForeground(true)
+                    stopSelf()
+                }
+                else -> {
+                    if (sessionState == null) {
+                        restart()
+                    }
+                    notifySessionToApp()
+                }
             }
+            sessionState?.let { sharedPreferences.saveActiveSession(it) }
+        } catch (e: Exception) {
+            onStartSession(EXTRA_REQUEST_PAUSE_SESSION)
+            e.printStackTrace()
         }
-        sessionState?.let { sharedPreferences.saveActiveSession(it) }
+
     }
 
     private fun onRequestStartSession() {
@@ -189,7 +215,6 @@ class LocationUpdatesService : Service() {
                     lastKnownLocation = task.result
                     startLatLng = LatLng(task.result.latitude, task.result.longitude)
                     route.add(LatLng(task.result.latitude, task.result.longitude))
-                    Log.e(TAG, "getLastLocation success")
                 } else {
                     Log.e(TAG, "Failed to get location.")
                 }
@@ -209,7 +234,6 @@ class LocationUpdatesService : Service() {
 
 
     private fun requestLocationUpdates() {
-        Log.e(TAG, "Requesting location updates")
         try {
             mFusedLocationProviderClient?.requestLocationUpdates(
                 mLocationRequest,
@@ -221,7 +245,6 @@ class LocationUpdatesService : Service() {
     }
 
     private fun requestStopLocationUpdates() {
-        Log.i(TAG, "Removing location updates")
         try {
             mFusedLocationProviderClient?.removeLocationUpdates(mLocationCallback)
         } catch (unlikely: SecurityException) {
@@ -233,9 +256,14 @@ class LocationUpdatesService : Service() {
     var timerJob: Job? = null
 
     private fun updateVelocity() = GlobalScope.launch {
+        var lastDistance = 0.0
+        var lastDuration = 0.0
         while (sessionState != SessionState.COMPLETE) {
             if (sessionState == SessionState.ACTIVE) {
-                totalVelocity += getVelocity(duration, distance)
+                currentSpeed = getVelocity(duration - lastDuration, distance - lastDistance)
+                lastDistance = distance
+                lastDuration = duration
+                totalVelocity += currentSpeed
                 if (totalVelocity > 0) {
                     velocityCount++
                 }
@@ -259,18 +287,27 @@ class LocationUpdatesService : Service() {
 
     private fun onNewLocation(location: Location?) {
         location?.let {
-            if (lastKnownLocation == null) {
-                lastKnownLocation = location
-            }
-            val distanceToLastLocation = it.distanceTo(lastKnownLocation).toDouble()
-            if (distanceToLastLocation > MINIMUM_DISTANCE) {
-                lastKnownLocation = location
-                distance += distanceToLastLocation
-                val lastLocationInLatLng = LatLng(location.latitude, location.longitude)
-                route.add(lastLocationInLatLng)
-                notifySessionToApp()
+            try {
+                if (lastKnownLocation == null) {
+                    lastKnownLocation = location
+                }
+                val distanceToLastLocation = it.distanceTo(lastKnownLocation).toDouble()
+                if (distanceToLastLocation > MINIMUM_DISTANCE) {
+                    lastKnownLocation = location
+                    distance += distanceToLastLocation
+                    val lastLocationInLatLng = LatLng(location.latitude, location.longitude)
+                    route.add(lastLocationInLatLng)
+                    notifySessionToApp()
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        Log.e(TAG, "onDestroy")
     }
 
     private fun notifySessionToApp() {
@@ -284,19 +321,15 @@ class LocationUpdatesService : Service() {
                         startLatLng,
                         lastKnownLocation,
                         avgSpeed,
-                        duration
+                        duration,
+                        currentSpeed
                     )
                 }
             )
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        Log.e(TAG, "onDestroy")
-    }
-
     companion object {
-        private const val MINIMUM_DISTANCE = 5
+        private const val MINIMUM_DISTANCE = 18
         private const val UPDATE_INTERVAL_IN_MILLISECONDS = 1000L
         private const val FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS =
             UPDATE_INTERVAL_IN_MILLISECONDS / 2

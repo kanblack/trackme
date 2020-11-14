@@ -3,7 +3,10 @@ package kb.dev.trackme.mvvm.views
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Bundle
+import android.provider.Settings
+import android.widget.Button
 import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -52,13 +55,13 @@ class SessionActivity : AppCompatActivity() {
             ) == PackageManager.PERMISSION_GRANTED
         ) {
             sharedPreferences.saveGrantPermissionStatus(true)
+            viewModel.onPermissionResult(true)
             startUpdateLocationService()
         } else {
             sharedPreferences.saveGrantPermissionStatus(false)
             ActivityCompat.requestPermissions(
                 this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
-                PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION
-            )
+                PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION)
         }
     }
 
@@ -87,10 +90,36 @@ class SessionActivity : AppCompatActivity() {
             requestLocationUpdateService(EXTRA_REQUEST_RESUME_SESSION)
         }
 
+        findViewById<Button>(R.id.btnCancelSession).setOnClickListener {
+            stopUpdateLocationService()
+            startActivity(Intent(this, SessionsHistoryActivity::class.java))
+        }
+
+        findViewById<Button>(R.id.btnGrantPermission).setOnClickListener {
+            if (ActivityCompat.shouldShowRequestPermissionRationale(
+                    this, Manifest.permission.ACCESS_FINE_LOCATION
+                )
+            ) {
+                getLocationPermission()
+            } else {
+                val intent = Intent()
+                intent.action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
+                val uri: Uri = Uri.fromParts("package", packageName, null)
+                intent.data = uri
+                startActivity(intent)
+            }
+        }
+
         viewModel.getSaveSessionCompleteEvent().observe(this, {
             requestLocationUpdateService(EXTRA_REQUEST_COMPLETE_SESSION)
             startActivity(Intent(this, SessionsHistoryActivity::class.java))
             finish()
+        })
+    }
+
+    private fun stopUpdateLocationService() {
+        stopService(Intent(this, LocationUpdatesService::class.java).also { intent ->
+            stopService(intent)
         })
     }
 
@@ -103,6 +132,9 @@ class SessionActivity : AppCompatActivity() {
             PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION -> {
                 if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     getLocationPermission()
+                } else {
+                    checkPauseLocationUpdate()
+                    viewModel.onPermissionResult(false)
                 }
             }
         }

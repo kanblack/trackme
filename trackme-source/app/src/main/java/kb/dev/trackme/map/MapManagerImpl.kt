@@ -58,7 +58,7 @@ class MapManagerImpl(
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
-    fun onMessageEvent(event: SessionEvent) {
+    fun onSessionEventUpdate(event: SessionEvent) {
         if (startLatLng == null) {
             startLatLng = event.startLatLng
             startLatLng?.let { updateUIStartLocation(it) }
@@ -77,47 +77,30 @@ class MapManagerImpl(
         EventBus.getDefault().unregister(this)
     }
 
-    override suspend fun getRoute(): String {
+    override suspend fun getRouteImage(): String {
         return suspendCoroutine { ct ->
             val session = session.value
             val route = session?.route ?: listOf()
-            val lastKnownLocation = session?.lastKnowLocation
-            val startLatLng = session?.startLatLng
-
-            val imageName = System.currentTimeMillis().toString()
-            val builder = LatLngBounds.Builder()
             if (route.isEmpty()) {
                 ct.resume("")
                 return@suspendCoroutine
             }
-            route.forEach {
-                builder.include(it)
-            }
-
-            val bounds = builder.build()
+            val lastKnownLocation = session?.lastKnowLocation
+            val startLatLng = session?.startLatLng
+            val bounds = getRouteBoundLatLgn(route)
 
             lastKnownLocation?.let {
                 GlobalScope.launch(Dispatchers.Main) {
                     startLatLng?.let { startLatLng ->
-
-
                         mMapToSave?.addMarker(
-                            MarkerOptions().position(
-                                startLatLng
-                            )
+                            MarkerOptions().position(startLatLng)
                                 .icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_start_marker))
                         )
-                        lastKnownLocation.let { lastKnownLocation ->
-                            mMapToSave?.addMarker(
-                                MarkerOptions().position(
-                                    LatLng(
-                                        lastKnownLocation.latitude,
-                                        lastKnownLocation.longitude
-                                    )
-                                )
-                                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_target_flag))
-                            )
-                        }
+                        mMapToSave?.addMarker(
+                            MarkerOptions().position(
+                                LatLng(lastKnownLocation.latitude, lastKnownLocation.longitude)
+                            ).icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_target_flag))
+                        )
                     }
                     mMapToSave?.setLatLngBoundsForCameraTarget(bounds)
 
@@ -143,12 +126,25 @@ class MapManagerImpl(
                     mMapToSave?.addPolyline(PolylineOptions().add(*route.toTypedArray()))
                     delay(1000)
                     mMapToSave?.snapshot { snapshotBitmap ->
-                        ct.resume(imageStorage.storeImage(snapshotBitmap, imageName))
+                        ct.resume(
+                            imageStorage.storeImage(
+                                snapshotBitmap,
+                                System.currentTimeMillis().toString()
+                            )
+                        )
                     }
                 }
             }
         }
 
+    }
+
+    private fun getRouteBoundLatLgn(route: List<LatLng>): LatLngBounds {
+        val builder = LatLngBounds.Builder()
+        route.forEach {
+            builder.include(it)
+        }
+        return builder.build()
     }
 
     private fun updateLocationUI() {
@@ -169,12 +165,14 @@ class MapManagerImpl(
     }
 
     private fun updateUIStartLocation(startLatLng: LatLng) {
-        try {
-            updateLocationUI()
-            moveCamera(startLatLng)
-            markStartLocation(startLatLng)
-        } catch (e: SecurityException) {
-            Log.e("Exception: %s", e.message, e)
+        GlobalScope.launch(Dispatchers.Main) {
+            try {
+                updateLocationUI()
+                moveCamera(startLatLng)
+                markStartLocation(startLatLng)
+            } catch (e: SecurityException) {
+                Log.e("Exception: %s", e.message, e)
+            }
         }
     }
 
@@ -196,6 +194,6 @@ class MapManagerImpl(
     }
 
     companion object {
-        private const val DEFAULT_ZOOM = 15
+        private const val DEFAULT_ZOOM = 18
     }
 }
