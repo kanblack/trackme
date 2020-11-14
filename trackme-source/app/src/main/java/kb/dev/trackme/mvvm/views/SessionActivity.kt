@@ -8,6 +8,7 @@ import android.os.Bundle
 import android.provider.Settings
 import android.widget.Button
 import android.widget.ImageView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -61,7 +62,8 @@ class SessionActivity : AppCompatActivity() {
             sharedPreferences.saveGrantPermissionStatus(false)
             ActivityCompat.requestPermissions(
                 this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
-                PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION)
+                PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION
+            )
         }
     }
 
@@ -92,7 +94,9 @@ class SessionActivity : AppCompatActivity() {
 
         findViewById<Button>(R.id.btnCancelSession).setOnClickListener {
             stopUpdateLocationService()
+            sharedPreferences.saveActiveSession(SessionState.COMPLETE)
             startActivity(Intent(this, SessionsHistoryActivity::class.java))
+            finish()
         }
 
         findViewById<Button>(R.id.btnGrantPermission).setOnClickListener {
@@ -110,7 +114,12 @@ class SessionActivity : AppCompatActivity() {
             }
         }
 
-        viewModel.getSaveSessionCompleteEvent().observe(this, {
+        viewModel.getSaveSessionCompleteEvent().observe(this, { isSuccess ->
+            isSuccess?.let {
+                if (!it) {
+                    Toast.makeText(this, "You are not moving, no session created", Toast.LENGTH_SHORT).show()
+                }
+            }
             requestLocationUpdateService(EXTRA_REQUEST_COMPLETE_SESSION)
             startActivity(Intent(this, SessionsHistoryActivity::class.java))
             finish()
@@ -120,6 +129,7 @@ class SessionActivity : AppCompatActivity() {
     private fun stopUpdateLocationService() {
         stopService(Intent(this, LocationUpdatesService::class.java).also { intent ->
             stopService(intent)
+            sharedPreferences.saveActiveSession(SessionState.COMPLETE)
         })
     }
 

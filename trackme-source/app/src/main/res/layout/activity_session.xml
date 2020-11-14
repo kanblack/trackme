@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:map="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools">
 
     <data>
@@ -38,15 +37,14 @@
             app:layout_constraintTop_toTopOf="parent"
             tools:context=".mvvm.views.SessionActivity" />
 
+
         <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/layoutNoPermision"
+            android:id="@+id/layoutNoPermission"
             hide="@{viewModel.isPermissionGranted}"
             android:layout_width="match_parent"
             android:layout_height="150dp"
             android:background="@color/white"
             app:layout_constraintBottom_toBottomOf="parent">
-
-
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -87,7 +85,6 @@
             android:layout_width="match_parent"
             android:layout_height="150dp"
             android:background="@color/white"
-            android:visibility="gone"
             app:layout_constraintBottom_toBottomOf="parent">
 
 
@@ -140,33 +137,41 @@
                 android:layout_height="75dp"
                 android:layout_marginBottom="8dp"
                 app:hide="@{viewModel.sessionState != SessionState.COMPLETE}"
-                map:layout_constraintBottom_toBottomOf="parent"
-                map:layout_constraintEnd_toEndOf="parent"
-                map:layout_constraintStart_toStartOf="parent" />
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent" />
 
             <ImageView
+                app:hide="@{viewModel.sessionState == SessionState.COMPLETE}"
                 android:id="@+id/imvAction"
                 android:layout_width="75dp"
                 android:layout_height="75dp"
                 android:layout_marginBottom="8dp"
                 app:sessionState="@{viewModel.sessionState}"
-                map:layout_constraintBottom_toBottomOf="parent"
-                map:layout_constraintEnd_toEndOf="parent"
-                map:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
                 tools:ignore="ContentDescription" />
 
             <ImageView
                 android:id="@+id/imvResume"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:layout_marginStart="16dp"
-                android:layout_marginEnd="32dp"
-                android:layout_marginBottom="24dp"
+                android:layout_width="@dimen/icon_size"
+                android:layout_height="@dimen/icon_size"
+                android:layout_marginStart="@dimen/margin_normal"
+                android:layout_marginEnd="@dimen/margin_large"
                 android:src="@drawable/ic_restart"
                 app:hide="@{viewModel.sessionState != SessionState.PAUSE}"
-                map:layout_constraintBottom_toBottomOf="@id/imvAction"
-                map:layout_constraintRight_toLeftOf="@id/imvAction"
+                app:layout_constraintBottom_toBottomOf="@id/imvAction"
+                app:layout_constraintTop_toTopOf="@id/imvAction"
+                app:layout_constraintRight_toLeftOf="@id/imvAction"
+                
                 tools:ignore="ContentDescription" />
         </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <FrameLayout
+            app:layout_constraintTop_toBottomOf="@id/map"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/black"/>
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

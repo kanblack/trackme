@@ -19,7 +19,9 @@ import kotlinx.coroutines.launch
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
+import java.lang.Exception
 import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 import kotlin.math.ln
 
@@ -78,11 +80,12 @@ class MapManagerImpl(
     }
 
     override suspend fun getRouteImage(): String {
+        Log.e("@@@","get route")
         return suspendCoroutine { ct ->
             val session = session.value
             val route = session?.route ?: listOf()
-            if (route.isEmpty()) {
-                ct.resume("")
+            if (route.isEmpty() || route.size == 1) {
+                ct.resumeWithException(Exception("No route"))
                 return@suspendCoroutine
             }
             val lastKnownLocation = session?.lastKnowLocation
@@ -125,18 +128,21 @@ class MapManagerImpl(
                     )
                     mMapToSave?.addPolyline(PolylineOptions().add(*route.toTypedArray()))
                     delay(1000)
+                    Log.e("snapshot", "${mMapToSave == null}")
                     mMapToSave?.snapshot { snapshotBitmap ->
-                        ct.resume(
-                            imageStorage.storeImage(
-                                snapshotBitmap,
-                                System.currentTimeMillis().toString()
+                        GlobalScope.launch {
+                            Log.e("snapshot", "complete")
+                            ct.resume(
+                                imageStorage.storeImage(
+                                    snapshotBitmap,
+                                    System.currentTimeMillis().toString()
+                                )
                             )
-                        )
+                        }
                     }
                 }
             }
         }
-
     }
 
     private fun getRouteBoundLatLgn(route: List<LatLng>): LatLngBounds {

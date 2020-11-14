@@ -1,18 +1,17 @@
 package kb.dev.trackme.mvvm.views
 
 import android.content.Intent
+import android.graphics.Rect
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.paging.PagingDataAdapter
 import androidx.recyclerview.widget.DiffUtil
-import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
@@ -75,10 +74,32 @@ class SessionsHistoryActivity : AppCompatActivity() {
         val rcvSessions = findViewById<RecyclerView>(R.id.rcvSessions)
         rcvSessions?.layoutManager = LinearLayoutManager(this)
         rcvSessions.addItemDecoration(
-            DividerItemDecoration(
-                this,
-                DividerItemDecoration.VERTICAL
-            )
+            object : RecyclerView.ItemDecoration() {
+                override fun getItemOffsets(
+                    outRect: Rect,
+                    view: View,
+                    parent: RecyclerView,
+                    state: RecyclerView.State
+                ) {
+                    super.getItemOffsets(outRect, view, parent, state)
+                    val position = parent.getChildAdapterPosition(view)
+                    val count = parent.adapter?.itemCount ?: 0
+                    if(position == 0){
+                        outRect.top = this@SessionsHistoryActivity.resources.getDimensionPixelOffset(
+                            R.dimen.margin_normal
+                        )
+                    }
+                    outRect.bottom = this@SessionsHistoryActivity.resources.getDimensionPixelOffset(
+                        R.dimen.margin_normal
+                    )
+                    if (position == count - 1) {
+                        outRect.bottom += this@SessionsHistoryActivity.resources.getDimensionPixelOffset(
+                            R.dimen.action_button_size
+                        )
+                    }
+
+                }
+            }
         )
 
         rcvSessions?.adapter = pagingAdapter

@@ -25,13 +25,12 @@ class SessionViewModel(
     private val mapManager: MapManager
 ) :
     ViewModel(), SessionViewModelState {
-     val isPermissionGranted = MutableLiveData(true)
+    val isPermissionGranted = MutableLiveData(true)
     val sessionState = MutableLiveData(SessionState.ACTIVE)
     val distance = MutableLiveData(0.0)
     val duration = MutableLiveData(0.0)//millisecond
     val currentSpeed = MutableLiveData(0.0)
     private val avgSpeed = MutableLiveData(0.0)
-
     private val saveSessionCompleteEvent = SingleLiveEvent<Boolean>()
     private val isSavingSession = MutableLiveData(false)
     fun getSaveSessionCompleteEvent(): SingleLiveEvent<Boolean> {
@@ -45,8 +44,13 @@ class SessionViewModel(
                 when (state) {
                     SessionState.COMPLETE -> {
                         isSavingSession.postValue(true)
-                        saveSession()
-                        releaseCurrentSession()
+                        val isSuccess = try {
+                            saveSession()
+                            true
+                        } catch (e: Exception) {
+                            false
+                        }
+                        releaseCurrentSession(isSuccess)
                         isSavingSession.postValue(false)
                     }
                     SessionState.ACTIVE -> {
@@ -73,8 +77,8 @@ class SessionViewModel(
     }
 
 
-    private fun releaseCurrentSession() {
-        saveSessionCompleteEvent.postValue(true)
+    private fun releaseCurrentSession(isSuccess: Boolean = false) {
+        saveSessionCompleteEvent.postValue(isSuccess)
     }
 
     private suspend fun saveSession() {
