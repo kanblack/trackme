@@ -19,10 +19,11 @@ import kotlinx.coroutines.launch
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
+import java.lang.Exception
 import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 import kotlin.math.ln
-
 
 class MapManagerImpl(
     private val imageStorage: ImageStorage,
@@ -72,7 +73,6 @@ class MapManagerImpl(
         requestUpdateRoute(event.route)
     }
 
-
     override fun release() {
         EventBus.getDefault().unregister(this)
     }
@@ -81,8 +81,8 @@ class MapManagerImpl(
         return suspendCoroutine { ct ->
             val session = session.value
             val route = session?.route ?: listOf()
-            if (route.isEmpty()) {
-                ct.resume("")
+            if (route.isEmpty() || route.size == 1) {
+                ct.resumeWithException(Exception("No route"))
                 return@suspendCoroutine
             }
             val lastKnownLocation = session?.lastKnowLocation
@@ -117,8 +117,6 @@ class MapManagerImpl(
                     val scale = radius / 340
                     val zoomLevel = (16 - ln(scale) / ln(2.0)).toFloat()
 
-                    Log.e("zoom level", "zoomLevel: $zoomLevel - radius: $radius")
-
                     mMapToSave?.moveCamera(
                         CameraUpdateFactory
                             .newLatLngZoom(bounds.center, zoomLevel)
@@ -126,17 +124,18 @@ class MapManagerImpl(
                     mMapToSave?.addPolyline(PolylineOptions().add(*route.toTypedArray()))
                     delay(1000)
                     mMapToSave?.snapshot { snapshotBitmap ->
-                        ct.resume(
-                            imageStorage.storeImage(
-                                snapshotBitmap,
-                                System.currentTimeMillis().toString()
+                        GlobalScope.launch {
+                            ct.resume(
+                                imageStorage.storeImage(
+                                    snapshotBitmap,
+                                    System.currentTimeMillis().toString()
+                                )
                             )
-                        )
+                        }
                     }
                 }
             }
         }
-
     }
 
     private fun getRouteBoundLatLgn(route: List<LatLng>): LatLngBounds {
