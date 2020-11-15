@@ -66,10 +66,14 @@ class SessionsHistoryActivity : AppCompatActivity() {
         }
     }
 
+    var clicked = false
     private fun setupInteraction() {
         findViewById<ImageView>(R.id.btnRecord).setOnClickListener {
-            startActivity(Intent(this, SessionActivity::class.java))
-            finish()
+            if (!clicked) {
+                clicked = true
+                startActivity(Intent(this, SessionActivity::class.java))
+                finish()
+            }
         }
     }
 
