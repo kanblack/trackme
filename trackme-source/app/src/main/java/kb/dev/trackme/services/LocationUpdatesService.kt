@@ -15,6 +15,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.tasks.Task
 import com.google.gson.Gson
 import kb.dev.trackme.*
 import kb.dev.trackme.R
@@ -23,13 +24,14 @@ import kb.dev.trackme.common.getDurationFormatted
 import kb.dev.trackme.common.getVelocity
 import kb.dev.trackme.mvvm.BackupSession
 import kb.dev.trackme.mvvm.SessionEvent
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import kb.dev.trackme.mvvm.views.SessionActivity
+import kotlinx.coroutines.*
 import org.greenrobot.eventbus.EventBus
 import org.koin.android.ext.android.inject
 
+
+@FlowPreview
+@ExperimentalCoroutinesApi
 class LocationUpdatesService : Service() {
     private val sharedPreferences: SharePreferenceUtils by inject()
     private var currentSpeed: Double = 0.0
@@ -111,11 +113,21 @@ class LocationUpdatesService : Service() {
 
     private fun getNotification(): Notification? {
         val builder = getNotificationBuilder()
-        return builder
-            .setContentTitle(getString(R.string.ic_notification_title))
-            .setSmallIcon(R.drawable.ic_speed)
-            .setTicker(getString(R.string.ic_notification_title))
-            .build()
+        getPendingIntent()
+        return builder.apply {
+            setContentTitle(getString(R.string.ic_notification_title))
+            setSmallIcon(R.drawable.ic_speed)
+            setTicker(getString(R.string.ic_notification_title))
+            setContentIntent(getPendingIntent())
+        }.build()
+    }
+
+    private fun getPendingIntent(): PendingIntent? {
+        val resultIntent = Intent(this, SessionActivity::class.java)
+        return TaskStackBuilder.create(this).run {
+            addNextIntentWithParentStack(resultIntent)
+            getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT)
+        }
     }
 
     private fun getNotificationBuilder(): NotificationCompat.Builder {
@@ -132,11 +144,13 @@ class LocationUpdatesService : Service() {
 
     private fun updateNotification(message: String) {
         val builder = getNotificationBuilder()
-        builder
-            .setContentTitle(getString(R.string.ic_notification_title))
-            .setContentText(message)
-            .setSmallIcon(R.drawable.ic_speed)
-            .setTicker(getString(R.string.ic_notification_title))
+        builder.apply {
+            setContentIntent(getPendingIntent())
+            setContentTitle(getString(R.string.ic_notification_title))
+            setContentText(message)
+            setSmallIcon(R.drawable.ic_speed)
+            setTicker(getString(R.string.ic_notification_title))
+        }
         with(NotificationManagerCompat.from(this)) {
             // notificationId is a unique int for each notification that you must define
             notify(NOTIFICATION_ID, builder.build())

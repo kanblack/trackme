@@ -11,11 +11,9 @@ import com.google.android.gms.maps.model.*
 import kb.dev.trackme.common.ImageStorage
 import kb.dev.trackme.R
 import kb.dev.trackme.common.SharePreferenceUtils
+import kb.dev.trackme.common.toLatLgn
 import kb.dev.trackme.mvvm.SessionEvent
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
@@ -41,6 +39,9 @@ class MapManagerImpl(
 
     override fun attachMap(activity: Activity, googleMap: GoogleMap) {
         mMap = googleMap
+        mMap?.uiSettings?.apply {
+            setAllGesturesEnabled(false)
+        }
         updateLocationUI()
         startLatLng?.let {
             moveCamera(it)
@@ -77,65 +78,72 @@ class MapManagerImpl(
         EventBus.getDefault().unregister(this)
     }
 
-    override suspend fun getRouteImage(): String {
-        return suspendCoroutine { ct ->
+    override suspend fun getRouteImage(): String = withContext(Dispatchers.Main) {
+        return@withContext suspendCoroutine { ct ->
             val session = session.value
             val route = session?.route ?: listOf()
             if (route.isEmpty() || route.size == 1) {
                 ct.resumeWithException(Exception("No route"))
                 return@suspendCoroutine
             }
-            val lastKnownLocation = session?.lastKnowLocation
-            val startLatLng = session?.startLatLng
-            val bounds = getRouteBoundLatLgn(route)
 
-            lastKnownLocation?.let {
-                GlobalScope.launch(Dispatchers.Main) {
-                    startLatLng?.let { startLatLng ->
-                        mMapToSave?.addMarker(
-                            MarkerOptions().position(startLatLng)
-                                .icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_start_marker))
-                        )
-                        mMapToSave?.addMarker(
-                            MarkerOptions().position(
-                                LatLng(lastKnownLocation.latitude, lastKnownLocation.longitude)
-                            ).icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_target_flag))
-                        )
-                    }
-                    mMapToSave?.setLatLngBoundsForCameraTarget(bounds)
+            session?.lastKnowLocation?.let { lastKnownLocation ->
+                val bounds = getRouteBoundLatLgn(route)
+                val zoomLevel = getZoomLevel(bounds)
 
-                    val loc1 = Location(LocationManager.GPS_PROVIDER).apply {
-                        latitude = bounds.northeast.latitude
-                        longitude = bounds.northeast.longitude
-                    }
-                    val loc2 = Location(LocationManager.GPS_PROVIDER).apply {
-                        latitude = bounds.southwest.latitude
-                        longitude = bounds.southwest.longitude
-                    }
-
-                    val radius = loc1.distanceTo(loc2)
-                    val scale = radius / 340
-                    val zoomLevel = (16 - ln(scale) / ln(2.0)).toFloat()
-
-                    mMapToSave?.moveCamera(
-                        CameraUpdateFactory
-                            .newLatLngZoom(bounds.center, zoomLevel)
-                    )
-                    mMapToSave?.addPolyline(PolylineOptions().add(*route.toTypedArray()))
-                    delay(1000)
-                    mMapToSave?.snapshot { snapshotBitmap ->
-                        GlobalScope.launch {
-                            ct.resume(
-                                imageStorage.storeImage(
-                                    snapshotBitmap,
-                                    System.currentTimeMillis().toString()
-                                )
-                            )
+                mMapToSave?.apply {
+                    moveCamera(CameraUpdateFactory.newLatLngZoom(bounds.center, zoomLevel))
+                    addPolyline(PolylineOptions().add(*route.toTypedArray()))
+                    addMarker(
+                        MarkerOptions().apply {
+                            startLatLng?.let { position(it) }
+                            icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_start_marker))
                         }
-                    }
+                    )
+                    addMarker(
+                        MarkerOptions().apply {
+                            position(lastKnownLocation.toLatLgn())
+                            icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_target_flag))
+                        }
+                    )
+                }
+
+                GlobalScope.launch(Dispatchers.IO) {
+                    delay(100)
+                    ct.resume(getMapSnapshot())
                 }
             }
         }
+    }
+
+    private suspend fun getMapSnapshot(): String {
+        return suspendCoroutine { ct ->
+            mMapToSave?.snapshot { snapshotBitmap ->
+                GlobalScope.launch(Dispatchers.IO) {
+                    ct.resume(
+                        imageStorage.storeImage(
+                            snapshotBitmap,
+                            System.currentTimeMillis().toString()
+                        )
+                    )
+                }
+            }
+        }
+    }
+
+    private fun getZoomLevel(bounds: LatLngBounds): Float {
+        val loc1 = Location(LocationManager.GPS_PROVIDER).apply {
+            latitude = bounds.northeast.latitude
+            longitude = bounds.northeast.longitude
+        }
+        val loc2 = Location(LocationManager.GPS_PROVIDER).apply {
+            latitude = bounds.southwest.latitude
+            longitude = bounds.southwest.longitude
+        }
+
+        val radius = loc1.distanceTo(loc2)
+        val scale = radius / 340
+        return (16 - ln(scale) / ln(2.0)).toFloat()
     }
 
     private fun getRouteBoundLatLgn(route: List<LatLng>): LatLngBounds {
@@ -177,22 +185,19 @@ class MapManagerImpl(
 
     private fun markStartLocation(startLatLng: LatLng) {
         mMap?.addMarker(
-            MarkerOptions().position(
-                startLatLng
-            ).icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_start_marker))
+            MarkerOptions().position(startLatLng).apply {
+                icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_start_marker))
+            }
         )
     }
 
     private fun moveCamera(location: LatLng) {
         GlobalScope.launch(Dispatchers.Main) {
-            mMap?.moveCamera(
-                CameraUpdateFactory
-                    .newLatLngZoom(location, DEFAULT_ZOOM.toFloat())
-            )
+            mMap?.moveCamera(CameraUpdateFactory.newLatLngZoom(location, DEFAULT_ZOOM))
         }
     }
 
     companion object {
-        private const val DEFAULT_ZOOM = 18
+        private const val DEFAULT_ZOOM = 17f
     }
 }

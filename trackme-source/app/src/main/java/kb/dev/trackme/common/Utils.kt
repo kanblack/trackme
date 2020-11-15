@@ -1,6 +1,8 @@
 package kb.dev.trackme.common
 
 import android.content.Context
+import android.location.Location
+import com.google.android.gms.maps.model.LatLng
 import kb.dev.trackme.R
 import java.util.concurrent.TimeUnit
 
@@ -33,4 +35,8 @@ fun getDurationFormatted(context: Context, durationInMills: Long): String {
         minutes.toString().padStart(2, '0'),
         seconds.toString().padStart(2, '0')
     )
+}
+
+fun Location.toLatLgn(): LatLng {
+    return LatLng(this.latitude, this.longitude)
 }

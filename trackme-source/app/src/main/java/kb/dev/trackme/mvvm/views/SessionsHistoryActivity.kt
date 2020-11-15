@@ -83,12 +83,10 @@ class SessionsHistoryActivity : AppCompatActivity() {
         rcvSessions.addItemDecoration(getItemDecoration())
         val tvEmptyData = findViewById<TextView>(R.id.tvNoData)
         pagingAdapter.addLoadStateListener { loadState ->
-            if (loadState.append.endOfPaginationReached) {
-                if (pagingAdapter.itemCount < 1)
-                    tvEmptyData.visibility = View.VISIBLE
-                else {
-                    tvEmptyData.visibility = View.GONE
-                }
+            if (pagingAdapter.itemCount < 1)
+                tvEmptyData.visibility = View.VISIBLE
+            else {
+                tvEmptyData.visibility = View.GONE
             }
         }
         rcvSessions?.adapter = pagingAdapter
