@@ -18,7 +18,7 @@ import com.bumptech.glide.Glide
 import kb.dev.trackme.*
 import kb.dev.trackme.database.Session
 import kb.dev.trackme.mvvm.viewmodels.SessionsHistoryViewModel
-import kb.dev.trackme.utils.SharePreferenceUtils
+import kb.dev.trackme.common.SharePreferenceUtils
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.collectLatest
@@ -33,8 +33,9 @@ class SessionsHistoryActivity : AppCompatActivity() {
     private val pagingAdapter = SessionAdapter(SessionComparator)
     private val viewModel: SessionsHistoryViewModel by viewModel()
     private val sharedPreferences: SharePreferenceUtils by inject()
+    private var clicked = false
 
-    object SessionComparator : DiffUtil.ItemCallback<Session>() {
+    private object SessionComparator : DiffUtil.ItemCallback<Session>() {
         override fun areItemsTheSame(oldItem: Session, newItem: Session): Boolean {
             return oldItem.id == newItem.id
         }
@@ -66,7 +67,6 @@ class SessionsHistoryActivity : AppCompatActivity() {
         }
     }
 
-    var clicked = false
     private fun setupInteraction() {
         findViewById<ImageView>(R.id.btnRecord).setOnClickListener {
             if (!clicked) {
@@ -124,7 +124,7 @@ class SessionsHistoryActivity : AppCompatActivity() {
         }
     }
 
-    class SessionAdapter(diffCallback: DiffUtil.ItemCallback<Session>) :
+    private class SessionAdapter(diffCallback: DiffUtil.ItemCallback<Session>) :
         PagingDataAdapter<Session, SessionViewHolder>(diffCallback) {
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SessionViewHolder {
             return SessionViewHolder(
@@ -138,7 +138,7 @@ class SessionsHistoryActivity : AppCompatActivity() {
         }
     }
 
-    class SessionViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+    private class SessionViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         fun bind(item: Session?) {
             item?.let { session: Session ->
                 session.route?.let {
@@ -147,14 +147,14 @@ class SessionsHistoryActivity : AppCompatActivity() {
                 }
 
                 setDistance(
-                    itemView.findViewById<TextView>(R.id.tvDistance),
+                    itemView.findViewById(R.id.tvDistance),
                     session.distance.toDouble()
                 )
                 setDuration(
-                    itemView.findViewById<TextView>(R.id.tvDuration),
+                    itemView.findViewById(R.id.tvDuration),
                     session.duration.toDouble()
                 )
-                setVelocity(itemView.findViewById<TextView>(R.id.tvAvgSpeed), session.avgSpeed)
+                setVelocity(itemView.findViewById(R.id.tvAvgSpeed), session.avgSpeed)
             }
         }
     }

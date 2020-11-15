@@ -1,9 +1,10 @@
-package kb.dev.trackme.utils
+package kb.dev.trackme.common
 
 import android.content.Context
 import android.content.SharedPreferences
 import com.google.gson.Gson
 import kb.dev.trackme.*
+import kb.dev.trackme.mvvm.BackupSession
 
 class SharePreferenceUtils(context: Context) {
     private val sharedPreferences: SharedPreferences =

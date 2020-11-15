@@ -18,7 +18,7 @@ import kb.dev.trackme.*
 import kb.dev.trackme.databinding.ActivitySessionBinding
 import kb.dev.trackme.mvvm.viewmodels.SessionViewModel
 import kb.dev.trackme.services.LocationUpdatesService
-import kb.dev.trackme.utils.SharePreferenceUtils
+import kb.dev.trackme.common.SharePreferenceUtils
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import org.koin.android.ext.android.inject
@@ -43,6 +43,23 @@ class SessionActivity : AppCompatActivity() {
         setupInteraction()
     }
 
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<String>,
+        grantResults: IntArray
+    ) {
+        when (requestCode) {
+            PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION -> {
+                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    getLocationPermission()
+                } else {
+                    checkPauseLocationUpdate()
+                    viewModel.onPermissionResult(false)
+                }
+            }
+        }
+    }
+
     private fun setupBindingData() {
         val binding: ActivitySessionBinding =
             DataBindingUtil.setContentView(this, R.layout.activity_session)
@@ -57,7 +74,7 @@ class SessionActivity : AppCompatActivity() {
         ) {
             sharedPreferences.saveGrantPermissionStatus(true)
             viewModel.onPermissionResult(true)
-            startUpdateLocationService()
+            requestStartUpdateLocationService()
         } else {
             sharedPreferences.saveGrantPermissionStatus(false)
             ActivityCompat.requestPermissions(
@@ -89,7 +106,7 @@ class SessionActivity : AppCompatActivity() {
 
         findViewById<ImageView>(R.id.imvResume).setOnClickListener {
             viewModel.onResumeButtonClicked()
-            requestLocationUpdateService(EXTRA_REQUEST_RESUME_SESSION)
+            requestLocationUpdateService(EXTRA_CMD_REQUEST_RESUME_SESSION)
         }
 
         findViewById<Button>(R.id.btnCancelSession).setOnClickListener {
@@ -117,10 +134,14 @@ class SessionActivity : AppCompatActivity() {
         viewModel.getSaveSessionCompleteEvent().observe(this, { isSuccess ->
             isSuccess?.let {
                 if (!it) {
-                    Toast.makeText(this, "You are not moving, no session created", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        this,
+                        "You are not moving, no session created",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
-            requestLocationUpdateService(EXTRA_REQUEST_COMPLETE_SESSION)
+            requestLocationUpdateService(EXTRA_CMD_REQUEST_COMPLETE_SESSION)
             startActivity(Intent(this, SessionsHistoryActivity::class.java))
             finish()
         })
@@ -133,29 +154,11 @@ class SessionActivity : AppCompatActivity() {
         })
     }
 
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<String>,
-        grantResults: IntArray
-    ) {
-        when (requestCode) {
-            PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION -> {
-                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    getLocationPermission()
-                } else {
-                    checkPauseLocationUpdate()
-                    viewModel.onPermissionResult(false)
-                }
-            }
-        }
-    }
-
-
-    private fun startUpdateLocationService() {
+    private fun requestStartUpdateLocationService() {
         val lastSessionState = sharedPreferences.getLastSessionSate()
         val extra =
             if ((lastSessionState == null) || (lastSessionState == SessionState.COMPLETE.toString())) {
-                EXTRA_REQUEST_START_SESSION
+                EXTRA_CMD_REQUEST_START_SESSION
             } else null
 
         requestLocationUpdateService(extra)
@@ -164,14 +167,14 @@ class SessionActivity : AppCompatActivity() {
     private fun checkPauseLocationUpdate() {
         val lastSessionState = sharedPreferences.getLastSessionSate()
         if (lastSessionState == SessionState.ACTIVE.toString()) {
-            requestLocationUpdateService(EXTRA_REQUEST_PAUSE_SESSION)
+            requestLocationUpdateService(EXTRA_CMD_REQUEST_PAUSE_SESSION)
         }
     }
 
     private fun requestLocationUpdateService(extra: String?) {
         Intent(this, LocationUpdatesService::class.java).also { intent ->
             extra?.let {
-                intent.putExtra("type", extra)
+                intent.putExtra(EXTRA_CMD_REQUEST_TYPE, extra)
             }
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
                 startForegroundService(intent)

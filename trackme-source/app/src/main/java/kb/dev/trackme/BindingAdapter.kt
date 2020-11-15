@@ -4,10 +4,9 @@ import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.databinding.BindingAdapter
-import kb.dev.trackme.utils.convertMeterToKilometer
-import kb.dev.trackme.utils.getDurationFormatted
+import kb.dev.trackme.common.convertMeterToKilometer
+import kb.dev.trackme.common.getDurationFormatted
 import java.text.NumberFormat
-import java.util.concurrent.TimeUnit
 import kotlin.math.roundToInt
 
 @BindingAdapter("sessionState")

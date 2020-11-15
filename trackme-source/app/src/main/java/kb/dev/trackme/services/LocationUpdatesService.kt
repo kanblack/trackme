@@ -18,17 +18,17 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.gson.Gson
 import kb.dev.trackme.*
 import kb.dev.trackme.R
-import kb.dev.trackme.utils.SharePreferenceUtils
-import kb.dev.trackme.utils.getDurationFormatted
-import kb.dev.trackme.utils.getVelocity
+import kb.dev.trackme.common.SharePreferenceUtils
+import kb.dev.trackme.common.getDurationFormatted
+import kb.dev.trackme.common.getVelocity
+import kb.dev.trackme.mvvm.BackupSession
+import kb.dev.trackme.mvvm.SessionEvent
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.greenrobot.eventbus.EventBus
 import org.koin.android.ext.android.inject
-import java.util.concurrent.TimeUnit
-
 
 class LocationUpdatesService : Service() {
     private val sharedPreferences: SharePreferenceUtils by inject()
@@ -51,6 +51,9 @@ class LocationUpdatesService : Service() {
     private var timerJob: Job? = null
 
     private var mFusedLocationProviderClient: FusedLocationProviderClient? = null
+
+    private var lastDistance = 0.0
+    private var lastDuration = 0.0
 
     private val mLocationCallback = object : LocationCallback() {
         override fun onLocationResult(locationResult: LocationResult?) {
@@ -158,7 +161,7 @@ class LocationUpdatesService : Service() {
 
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
         try {
-            val type = intent.getStringExtra("type")
+            val type = intent.getStringExtra(EXTRA_CMD_REQUEST_TYPE)
             onStartSession(type)
         } catch (e: Exception) {
             e.printStackTrace()
@@ -204,21 +207,21 @@ class LocationUpdatesService : Service() {
     private fun onStartSession(type: String?) {
         try {
             when (type) {
-                EXTRA_REQUEST_START_SESSION -> {
+                EXTRA_CMD_REQUEST_START_SESSION -> {
                     onRequestStartSession()
                 }
-                EXTRA_REQUEST_PAUSE_SESSION -> {
+                EXTRA_CMD_REQUEST_PAUSE_SESSION -> {
                     backupState()
                     requestStopLocationUpdates()
                     sessionState = SessionState.PAUSE
                     cancelJob()
                 }
-                EXTRA_REQUEST_RESUME_SESSION -> {
+                EXTRA_CMD_REQUEST_RESUME_SESSION -> {
                     requestLocationUpdates()
                     sessionState = SessionState.ACTIVE
                     startJob()
                 }
-                EXTRA_REQUEST_COMPLETE_SESSION -> {
+                EXTRA_CMD_REQUEST_COMPLETE_SESSION -> {
                     sessionState = SessionState.COMPLETE
                     cancelJob()
                     requestStopLocationUpdates()
@@ -235,7 +238,7 @@ class LocationUpdatesService : Service() {
             }
             sessionState?.let { sharedPreferences.saveActiveSession(it) }
         } catch (e: Exception) {
-            onStartSession(EXTRA_REQUEST_PAUSE_SESSION)
+            onStartSession(EXTRA_CMD_REQUEST_PAUSE_SESSION)
             e.printStackTrace()
         }
 
@@ -253,9 +256,9 @@ class LocationUpdatesService : Service() {
 
     private fun restart() {
         val type = when (sharedPreferences.getLastSessionSate()) {
-            SessionState.ACTIVE.toString() -> EXTRA_REQUEST_RESUME_SESSION
-            SessionState.PAUSE.toString() -> EXTRA_REQUEST_RESUME_SESSION
-            else -> EXTRA_REQUEST_START_SESSION
+            SessionState.ACTIVE.toString() -> EXTRA_CMD_REQUEST_RESUME_SESSION
+            SessionState.PAUSE.toString() -> EXTRA_CMD_REQUEST_RESUME_SESSION
+            else -> EXTRA_CMD_REQUEST_START_SESSION
         }
         onStartSession(type)
         getLastLocation()
@@ -311,7 +314,6 @@ class LocationUpdatesService : Service() {
         return locationRequest
     }
 
-
     private fun requestLocationUpdates() {
         try {
             mFusedLocationProviderClient?.requestLocationUpdates(
@@ -330,9 +332,6 @@ class LocationUpdatesService : Service() {
             Log.e(TAG, "Lost location permission. Could not remove updates. $unlikely")
         }
     }
-
-    var lastDistance = 0.0
-    var lastDuration = 0.0
 
     private fun updateVelocityJob() = GlobalScope.launch {
         while (sessionState != SessionState.COMPLETE) {

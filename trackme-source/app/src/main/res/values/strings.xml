@@ -6,7 +6,6 @@
     <string name="hint_avg_speed">-- km/h</string>
     <string name="tv_avg_speed">%s km/h</string>
     <string name="tv_duration">%s:%s:%s</string>
-    <string name="tv_distance">%s km</string>
     <string name="the_session_can_t_record_without_location_permission">Your workout can\'t record without location permission</string>
     <string name="cancel_session">Cancel session</string>
     <string name="grant_permission">Grant Permission</string>

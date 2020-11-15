@@ -8,10 +8,10 @@ import androidx.lifecycle.MutableLiveData
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.model.*
-import kb.dev.trackme.ImageStorage
+import kb.dev.trackme.common.ImageStorage
 import kb.dev.trackme.R
-import kb.dev.trackme.SessionEvent
-import kb.dev.trackme.utils.SharePreferenceUtils
+import kb.dev.trackme.common.SharePreferenceUtils
+import kb.dev.trackme.mvvm.SessionEvent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
@@ -59,7 +59,7 @@ class MapManagerImpl(
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
-    fun onSessionEventUpdate(event: SessionEvent) {
+    fun onMessageEvent(event: SessionEvent) {
         if (startLatLng == null) {
             startLatLng = event.startLatLng
             startLatLng?.let { updateUIStartLocation(it) }

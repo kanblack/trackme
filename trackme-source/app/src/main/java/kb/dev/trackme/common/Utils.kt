@@ -1,4 +1,4 @@
-package kb.dev.trackme.utils
+package kb.dev.trackme.common
 
 import android.content.Context
 import kb.dev.trackme.R
@@ -23,7 +23,7 @@ fun getDurationFormatted(context: Context, durationInMills: Long): String {
     val minutes =
         TimeUnit.MILLISECONDS.toMinutes(durationInMills - (TimeUnit.HOURS.toMillis(hours)))
     val seconds = TimeUnit.MILLISECONDS.toSeconds(
-        durationInMills.toLong()
+        durationInMills
                 - (TimeUnit.HOURS.toMillis(hours))
                 - (TimeUnit.MINUTES.toMillis(minutes))
     )

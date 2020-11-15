@@ -1,6 +1,5 @@
 package kb.dev.trackme.repositories
 
-import android.util.Log
 import androidx.annotation.WorkerThread
 import androidx.paging.PagingSource
 import kb.dev.trackme.database.Session
@@ -13,6 +12,6 @@ class SessionRepositoryImpl(private val sessionDao: SessionDao) : SessionReposit
 
     @WorkerThread
     override suspend fun saveNewSession(session: Session ) {
-        val id =  sessionDao.insert(session)
+        sessionDao.insert(session)
     }
 }

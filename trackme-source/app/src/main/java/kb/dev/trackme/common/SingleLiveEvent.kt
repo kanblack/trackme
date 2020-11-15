@@ -1,4 +1,4 @@
-package kb.dev.trackme
+package kb.dev.trackme.common
 
 import android.util.Log
 import androidx.annotation.MainThread
