@@ -54,11 +54,14 @@ class SessionsHistoryActivity : AppCompatActivity() {
             setContentView(R.layout.activity_sessions_history)
             setupRecycleView()
             setupInteraction()
+            bindingData()
+        }
+    }
 
-            lifecycleScope.launch {
-                viewModel.flow.collectLatest { pagingData ->
-                    pagingAdapter.submitData(pagingData)
-                }
+    private fun bindingData() {
+        lifecycleScope.launch {
+            viewModel.flow.collectLatest { pagingData ->
+                pagingAdapter.submitData(pagingData)
             }
         }
     }
@@ -73,37 +76,8 @@ class SessionsHistoryActivity : AppCompatActivity() {
     private fun setupRecycleView() {
         val rcvSessions = findViewById<RecyclerView>(R.id.rcvSessions)
         rcvSessions?.layoutManager = LinearLayoutManager(this)
-        rcvSessions.addItemDecoration(
-            object : RecyclerView.ItemDecoration() {
-                override fun getItemOffsets(
-                    outRect: Rect,
-                    view: View,
-                    parent: RecyclerView,
-                    state: RecyclerView.State
-                ) {
-                    super.getItemOffsets(outRect, view, parent, state)
-                    val position = parent.getChildAdapterPosition(view)
-                    val count = parent.adapter?.itemCount ?: 0
-                    if (position == 0) {
-                        outRect.top =
-                            this@SessionsHistoryActivity.resources.getDimensionPixelOffset(
-                                R.dimen.margin_normal
-                            )
-                    }
-                    outRect.bottom = this@SessionsHistoryActivity.resources.getDimensionPixelOffset(
-                        R.dimen.margin_normal
-                    )
-                    if (position == count - 1) {
-                        outRect.bottom += this@SessionsHistoryActivity.resources.getDimensionPixelOffset(
-                            R.dimen.action_button_size
-                        )
-                    }
-
-                }
-            }
-        )
+        rcvSessions.addItemDecoration(getItemDecoration())
         val tvEmptyData = findViewById<TextView>(R.id.tvNoData)
-
         pagingAdapter.addLoadStateListener { loadState ->
             if (loadState.append.endOfPaginationReached) {
                 if (pagingAdapter.itemCount < 1)
@@ -114,6 +88,36 @@ class SessionsHistoryActivity : AppCompatActivity() {
             }
         }
         rcvSessions?.adapter = pagingAdapter
+    }
+
+    private fun getItemDecoration(): RecyclerView.ItemDecoration {
+        return object : RecyclerView.ItemDecoration() {
+            override fun getItemOffsets(
+                outRect: Rect,
+                view: View,
+                parent: RecyclerView,
+                state: RecyclerView.State
+            ) {
+                super.getItemOffsets(outRect, view, parent, state)
+                val position = parent.getChildAdapterPosition(view)
+                val count = parent.adapter?.itemCount ?: 0
+                if (position == 0) {
+                    outRect.top =
+                        this@SessionsHistoryActivity.resources.getDimensionPixelOffset(
+                            R.dimen.margin_normal
+                        )
+                }
+                outRect.bottom = this@SessionsHistoryActivity.resources.getDimensionPixelOffset(
+                    R.dimen.margin_normal
+                )
+                if (position == count - 1) {
+                    outRect.bottom += this@SessionsHistoryActivity.resources.getDimensionPixelOffset(
+                        R.dimen.action_button_size
+                    )
+                }
+
+            }
+        }
     }
 
     class SessionAdapter(diffCallback: DiffUtil.ItemCallback<Session>) :

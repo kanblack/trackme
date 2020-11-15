@@ -19,6 +19,7 @@ import com.google.gson.Gson
 import kb.dev.trackme.*
 import kb.dev.trackme.R
 import kb.dev.trackme.utils.SharePreferenceUtils
+import kb.dev.trackme.utils.getDurationFormatted
 import kb.dev.trackme.utils.getVelocity
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
@@ -359,29 +360,16 @@ class LocationUpdatesService : Service() {
         while (sessionState != SessionState.COMPLETE) {
             if (sessionState == SessionState.ACTIVE) {
                 duration += INTERVAL_UPDATE_TIME_JOB
-                updateNotification(getDurationFormatted())
+                updateNotification(
+                    getDurationFormatted(
+                        this@LocationUpdatesService,
+                        duration.toLong()
+                    )
+                )
                 notifySessionToApp()
             }
             delay(INTERVAL_UPDATE_TIME_JOB)
         }
-    }
-
-    private fun getDurationFormatted(): String {
-        val durationInMills = duration.toLong()
-        val hours = TimeUnit.MILLISECONDS.toHours(durationInMills)
-        val minutes =
-            TimeUnit.MILLISECONDS.toMinutes(durationInMills - (TimeUnit.HOURS.toMillis(hours)))
-        val seconds = TimeUnit.MILLISECONDS.toSeconds(
-            durationInMills.toLong()
-                    - (TimeUnit.HOURS.toMillis(hours))
-                    - (TimeUnit.MINUTES.toMillis(minutes))
-        )
-        return getString(
-            R.string.tv_duration,
-            hours.toString().padStart(2, '0'),
-            minutes.toString().padStart(2, '0'),
-            seconds.toString().padStart(2, '0')
-        )
     }
 
     private fun onNewLocation(location: Location?) {

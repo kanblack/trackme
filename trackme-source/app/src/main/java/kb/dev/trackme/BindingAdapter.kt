@@ -5,6 +5,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.databinding.BindingAdapter
 import kb.dev.trackme.utils.convertMeterToKilometer
+import kb.dev.trackme.utils.getDurationFormatted
 import java.text.NumberFormat
 import java.util.concurrent.TimeUnit
 import kotlin.math.roundToInt
@@ -39,20 +40,7 @@ fun setDistance(tv: TextView, distanceInMeter: Double) {
 
 @BindingAdapter("duration")
 fun setDuration(tv: TextView, durationInMills: Double) {
-    val hours = TimeUnit.MILLISECONDS.toHours(durationInMills.toLong())
-    val minutes =
-        TimeUnit.MILLISECONDS.toMinutes(durationInMills.toLong() - (TimeUnit.HOURS.toMillis(hours)))
-    val seconds = TimeUnit.MILLISECONDS.toSeconds(
-        durationInMills.toLong()
-                - (TimeUnit.HOURS.toMillis(hours))
-                - (TimeUnit.MINUTES.toMillis(minutes))
-    )
-    tv.text = tv.context.getString(
-        R.string.tv_duration,
-        hours.toString().padStart(2, '0'),
-        minutes.toString().padStart(2, '0'),
-        seconds.toString().padStart(2, '0')
-    )
+    tv.text = getDurationFormatted(tv.context, durationInMills.toLong())
 }
 
 @BindingAdapter("velocity")
