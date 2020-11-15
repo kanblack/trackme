@@ -1,11 +1,13 @@
 package kb.dev.trackme
 
+import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.databinding.BindingAdapter
 import kb.dev.trackme.utils.convertMeterToKilometer
 import java.text.NumberFormat
 import java.util.concurrent.TimeUnit
+import kotlin.math.roundToInt
 
 @BindingAdapter("sessionState")
 fun setSessionButtonState(imv: ImageView, state: SessionState?) {
@@ -20,11 +22,16 @@ fun setSessionButtonState(imv: ImageView, state: SessionState?) {
     }
 }
 
+@BindingAdapter("hide")
+fun hideView(view: View, isHide: Boolean) {
+    view.visibility = if (isHide) View.GONE else View.VISIBLE
+}
+
 @BindingAdapter("distance")
 fun setDistance(tv: TextView, distanceInMeter: Double) {
     val distanceInKilometers = convertMeterToKilometer(distanceInMeter)
     tv.text = if (distanceInKilometers < 1) {
-        "${NumberFormat.getInstance().format(distanceInMeter)} m"
+        "${NumberFormat.getInstance().format(distanceInMeter.roundToInt())} m"
     } else {
         "${NumberFormat.getInstance().format(distanceInKilometers)} km"
     }

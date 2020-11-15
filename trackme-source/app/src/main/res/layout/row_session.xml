@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:background="@color/white"
+    android:layout_height="wrap_content">
+
+    <ImageView
+        android:id="@+id/imvRoute"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/router_view_height"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:ignore="ContentDescription" />
+
+    <TextView
+        android:layout_marginTop="@dimen/margin_normal"
+        android:textColor="@color/black"
+        android:id="@+id/tvDistance"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/margin_small"
+        android:drawablePadding="@dimen/margin_small"
+        android:hint="@string/hint_distance"
+        app:drawableStartCompat="@drawable/ic_distance"
+        app:layout_constraintTop_toBottomOf="@id/viewDivider"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <TextView
+        android:layout_marginTop="@dimen/margin_normal"
+        android:textColor="@color/black"
+        android:id="@+id/tvDuration"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/margin_small"
+        android:layout_marginEnd="@dimen/margin_normal"
+        android:drawablePadding="@dimen/margin_small"
+        android:hint="@string/hint_duration"
+        app:drawableStartCompat="@drawable/ic_duration"
+        app:layout_constraintTop_toBottomOf="@id/viewDivider"
+        app:layout_constraintRight_toRightOf="parent" />
+
+    <TextView
+        android:layout_marginTop="@dimen/margin_normal"
+        android:textColor="@color/black"
+        android:id="@+id/tvAvgSpeed"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/margin_small"
+        android:drawablePadding="@dimen/margin_small"
+        android:hint="@string/hint_avg_speed"
+        app:drawableStartCompat="@drawable/ic_avg_speed"
+        app:layout_constraintTop_toBottomOf="@id/viewDivider"
+        app:layout_constraintLeft_toRightOf="@id/tvDistance"
+        app:layout_constraintRight_toLeftOf="@id/tvDuration" />
+    <FrameLayout
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:background="@color/black"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/divider_height"/>
+    <FrameLayout
+        android:layout_marginTop="@dimen/margin_normal"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tvAvgSpeed"
+        android:background="@color/black"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/divider_height"/>
+    <FrameLayout
+        android:id="@+id/viewDivider"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/imvRoute"
+        android:background="@color/black"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/divider_height"/>
+</androidx.constraintlayout.widget.ConstraintLayout>

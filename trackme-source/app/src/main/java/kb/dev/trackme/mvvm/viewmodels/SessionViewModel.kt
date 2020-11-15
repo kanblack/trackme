@@ -1,19 +1,22 @@
 package kb.dev.trackme.mvvm.viewmodels
 
 import android.app.Activity
-import android.os.Bundle
-import android.util.Log
-import androidx.lifecycle.*
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.asFlow
+import androidx.lifecycle.viewModelScope
 import com.google.android.gms.maps.GoogleMap
+import kb.dev.trackme.SessionEvent
 import kb.dev.trackme.SessionState
+import kb.dev.trackme.SingleLiveEvent
+import kb.dev.trackme.database.Session
 import kb.dev.trackme.map.MapManager
 import kb.dev.trackme.repositories.SessionRepository
-import kb.dev.trackme.utils.getVelocity
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.debounce
-import kotlin.math.max
+import org.greenrobot.eventbus.EventBus
+import org.greenrobot.eventbus.Subscribe
+import org.greenrobot.eventbus.ThreadMode
 
 @ExperimentalCoroutinesApi
 @FlowPreview
@@ -22,105 +25,116 @@ class SessionViewModel(
     private val mapManager: MapManager
 ) :
     ViewModel(), SessionViewModelState {
+    val isPermissionGranted = MutableLiveData(true)
     val sessionState = MutableLiveData(SessionState.ACTIVE)
-    val distance = MutableLiveData(0.0)//metter
+    val distance = MutableLiveData(0.0)
     val duration = MutableLiveData(0.0)//millisecond
-    var velocityCount = 0
-    var totalVelocity = 0.0
-    val avgSpeed = MutableLiveData(0.0)
+    val currentSpeed = MutableLiveData(0.0)
+    private val avgSpeed = MutableLiveData(0.0)
+    private val saveSessionCompleteEvent = SingleLiveEvent<Boolean>()
+    private val isSavingSession = MutableLiveData(false)
+    fun getSaveSessionCompleteEvent(): SingleLiveEvent<Boolean> {
+        return saveSessionCompleteEvent
+    }
 
     init {
+        EventBus.getDefault().register(this)
         viewModelScope.launch(Dispatchers.Default) {
-            sessionState.asFlow().debounce(1000).collectLatest { state: SessionState? ->
-                if (state == SessionState.COMPLETE) {
-                    saveSession()
-                    releaseCurrentSession()
-                } else if(state == SessionState.ACTIVE){
-                    startTimer()
+            sessionState.asFlow().collect { state: SessionState? ->
+                when (state) {
+                    SessionState.COMPLETE -> {
+                        isSavingSession.postValue(true)
+                        val isSuccess = try {
+                            saveSession()
+                            true
+                        } catch (e: Exception) {
+                            false
+                        }
+                        releaseCurrentSession(isSuccess)
+                        isSavingSession.postValue(false)
+                    }
+                    SessionState.ACTIVE -> {
+                        requestLocationUpdate()
+                    }
+                    SessionState.PAUSE -> {
+                        requestStopLocationUpdate()
+                    }
                 }
             }
         }
+    }
 
-        viewModelScope.launch {
-            duration.asFlow().collect {
-                updateVelocity()
-            }
-        }
+    override fun onCleared() {
+        super.onCleared()
+        EventBus.getDefault().unregister(this)
+        mapManager.release()
+    }
+
+    private fun requestStopLocationUpdate() {
+    }
+
+    private fun requestLocationUpdate() {
     }
 
 
-    private fun releaseCurrentSession() {
+    private fun releaseCurrentSession(isSuccess: Boolean = false) {
+        saveSessionCompleteEvent.postValue(isSuccess)
     }
 
-    private fun updateVelocity() {
-        val duration = duration.value ?: 0.0
-        val distance = distance.value ?: 0.0
-        totalVelocity += getVelocity(duration, distance)
-        velocityCount++
-        updateAvgSpeed()
-    }
-
-    private fun updateAvgSpeed() {
-        val currentAvgSpeed = totalVelocity / velocityCount
-        avgSpeed.postValue(currentAvgSpeed)
-    }
-
-    private suspend fun startTimer() {
-        val timerIntervalInMills = 500L
-        if (sessionState.value == SessionState.ACTIVE) {
-            val updateDuration = (duration.value ?: 0.0) + timerIntervalInMills
-            duration.postValue(updateDuration)
-            updateVelocity()
-            delay(timerIntervalInMills)
-            startTimer()
-        }
-    }
-
-    private fun saveSession() {
+    private suspend fun saveSession() {
         val distance = distance.value ?: 0.0
         val duration = duration.value ?: 0.0
-        val avgVelocity = totalVelocity / max(velocityCount,1)
-        repository.saveNewSession(distance, duration, avgVelocity)
+        val avgVelocity = avgSpeed.value ?: 0.0
+        repository.saveNewSession(
+            Session(
+                avgSpeed = avgVelocity,
+                createdAt = System.currentTimeMillis(),
+                distance = distance.toLong(),
+                duration = duration.toLong(),
+                route = mapManager.getRouteImage()
+            )
+        )
     }
 
     override fun onAttachMap(activity: Activity, googleMap: GoogleMap) {
         mapManager.attachMap(activity, googleMap)
     }
 
-    override fun onRequestPermissionsResult(
-        activity: Activity,
-        requestCode: Int,
-        permissions: Array<String>,
-        grantResults: IntArray
-    ) {
-        mapManager.updateDatePermissionResult(activity, requestCode, permissions, grantResults)
-    }
-
-    override fun onSaveMapState(outState: Bundle) {
-        mapManager.saveMapState(outState)
-
-    }
-
-    override fun onRestoreMapState(savedInstanceState: Bundle) {
-        mapManager.restoreMapState(savedInstanceState)
-    }
-
     override fun onActionButtonClicked() {
         val updateState = when (sessionState.value) {
             SessionState.ACTIVE -> SessionState.PAUSE
             SessionState.PAUSE -> SessionState.COMPLETE
-            else -> SessionState.COMPLETE
+            else -> SessionState.PAUSE
         }
         updateSessionState(updateState)
     }
 
     override fun onResumeButtonClicked() {
-        updateSessionState(SessionState.ACTIVE)
+        if (sessionState.value != SessionState.ACTIVE) {
+            updateSessionState(SessionState.ACTIVE)
+        }
     }
 
     private fun updateSessionState(currentState: SessionState?) {
         sessionState.postValue(
             currentState
         )
+    }
+
+    override fun onAttachMapToSave(activity: Activity, googleMap: GoogleMap) {
+        mapManager.attachMapToSave(activity, googleMap)
+    }
+
+    override fun onPermissionResult(status: Boolean) {
+        isPermissionGranted.postValue(status)
+    }
+
+    @Subscribe(threadMode = ThreadMode.BACKGROUND)
+    fun onMessageEvent(event: SessionEvent) {
+        distance.postValue(event.distance)
+        currentSpeed.postValue(event.currentSpeed)
+        avgSpeed.postValue(event.avgSpeed)
+        duration.postValue(event.duration)
+        sessionState.postValue(event.sessionState)
     }
 }

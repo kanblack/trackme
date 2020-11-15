@@ -7,6 +7,8 @@
          location permissions for the "MyLocation" functionality.
     -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
 
     <application
         android:icon="@mipmap/ic_launcher"
@@ -15,7 +17,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.TrackMe"
         android:name=".MainApplication">
-        <activity android:name=".mvvm.views.SessionsHistoryActivity" />
+
         <!--
              The API key for Google Maps-based APIs is defined as a string resource.
              (See the file "res/values/google_maps_api.xml").
@@ -27,16 +29,28 @@
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="@string/google_maps_key" />
+        <meta-data
+            android:name="com.google.android.gms.version"
+            android:value="@integer/google_play_services_version" />
 
         <activity
+            android:launchMode="singleTask"
             android:name=".mvvm.views.SessionActivity"
-            android:label="@string/title_activity_maps">
+            android:label="@string/title_activity_maps" >
+
+        </activity>
+        <activity android:name=".mvvm.views.SessionsHistoryActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <service
+            android:name=".services.LocationUpdatesService"
+            android:foregroundServiceType="location">
+            <!-- Any inner elements would go here. -->
+        </service>
     </application>
 
 </manifest>

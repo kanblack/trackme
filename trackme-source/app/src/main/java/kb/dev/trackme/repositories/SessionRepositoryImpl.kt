@@ -1,34 +1,18 @@
 package kb.dev.trackme.repositories
 
-import kb.dev.trackme.mvvm.Session
+import android.util.Log
+import androidx.annotation.WorkerThread
+import androidx.paging.PagingSource
+import kb.dev.trackme.database.Session
+import kb.dev.trackme.database.SessionDao
 
-class SessionRepositoryImpl(): SessionRepository{
-    private val sessions = hashMapOf<Long, Session>()
-
-    override fun startNewSession(): Session {
-       return addNewSession()
+class SessionRepositoryImpl(private val sessionDao: SessionDao) : SessionRepository{
+    override fun getSessions(): PagingSource<Int, Session> {
+        return sessionDao.getSession()
     }
 
-    private fun addNewSession(): Session {
-        val newSession = Session()
-        val sessionId = newSession.id
-        sessions[sessionId] = newSession
-        return newSession
+    @WorkerThread
+    override suspend fun saveNewSession(session: Session ) {
+        val id =  sessionDao.insert(session)
     }
-
-    override fun stopSession(sessionId: String) {
-        TODO("Not yet implemented")
-    }
-
-    override fun pauseSession(sessionId: String) {
-        TODO("Not yet implemented")
-    }
-
-    override fun getSessions(offset: Int, limit: Int) {
-        TODO("Not yet implemented")
-    }
-
-    override fun saveNewSession(distance: Double, duration: Double, avgVelocity: Double) {
-    }
-
 }
