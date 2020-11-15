@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data>
+
+        <import type="kb.dev.trackme.SessionState" />
+
+        <import type="android.view.View" />
+
+        <variable
+            name="viewModel"
+            type="kb.dev.trackme.mvvm.viewmodels.SessionViewModel" />
+    </data>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <fragment
+            android:id="@+id/mapToSave"
+            android:name="com.google.android.gms.maps.SupportMapFragment"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/router_view_height"
+            app:layout_constraintBottom_toTopOf="@+id/layoutSession"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:context=".mvvm.views.SessionActivity" />
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/white"
+            app:layout_constraintBottom_toTopOf="@+id/layoutSession"
+            app:layout_constraintTop_toTopOf="parent"/>
+
+        <fragment
+            android:id="@+id/map"
+            android:name="com.google.android.gms.maps.SupportMapFragment"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            app:layout_constraintBottom_toTopOf="@+id/layoutSession"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:context=".mvvm.views.SessionActivity" />
+
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/layoutNoPermission"
+            hide="@{viewModel.isPermissionGranted}"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/action_layout_height"
+            android:background="@color/white"
+            app:layout_constraintBottom_toBottomOf="parent">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/margin_small"
+                android:layout_marginTop="@dimen/margin_small"
+                android:drawablePadding="@dimen/margin_small"
+                android:text="@string/the_session_can_t_record_without_location_permission"
+                android:textColor="@color/black"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_goneMarginLeft="@dimen/margin_normal" />
+
+            <Button
+                android:id="@+id/btnCancelSession"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/margin_normal"
+                android:layout_marginBottom="@dimen/margin_normal"
+                android:text="@string/cancel_session"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent" />
+
+            <Button
+                android:id="@+id/btnGrantPermission"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="@dimen/margin_normal"
+                android:layout_marginBottom="@dimen/margin_normal"
+                android:text="@string/grant_permission"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            hide="@{!viewModel.isPermissionGranted}"
+            android:id="@+id/layoutSession"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/action_layout_height"
+            android:background="@color/white"
+            app:layout_constraintBottom_toBottomOf="parent">
+
+
+            <TextView
+                android:id="@+id/tvDistance"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/margin_small"
+                android:layout_marginTop="@dimen/margin_small"
+                android:drawablePadding="@dimen/margin_small"
+                android:hint="@string/hint_distance"
+                android:textColor="@color/black"
+                app:distance="@{viewModel.distance}"
+                app:drawableStartCompat="@drawable/ic_distance"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/tvDuration"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/margin_small"
+                android:layout_marginTop="@dimen/margin_small"
+                android:layout_marginEnd="@dimen/margin_normal"
+                android:drawablePadding="@dimen/margin_small"
+                android:hint="@string/hint_duration"
+                android:textColor="@color/black"
+                app:drawableStartCompat="@drawable/ic_duration"
+                app:duration="@{viewModel.duration}"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/tvAvgSpeed"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/margin_small"
+                android:layout_marginTop="@dimen/margin_small"
+                android:drawablePadding="@dimen/margin_small"
+                android:hint="@string/hint_avg_speed"
+                android:textColor="@color/black"
+                app:drawableStartCompat="@drawable/ic_speed"
+                app:layout_constraintLeft_toRightOf="@id/tvDistance"
+                app:layout_constraintRight_toLeftOf="@id/tvDuration"
+                app:layout_constraintTop_toTopOf="parent"
+                app:velocity="@{viewModel.currentSpeed}" />
+
+            <ProgressBar
+                android:layout_width="@dimen/action_button_size"
+                android:layout_height="@dimen/action_button_size"
+                android:layout_marginBottom="@dimen/margin_small"
+                app:hide="@{viewModel.sessionState != SessionState.COMPLETE}"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent" />
+
+            <ImageView
+                app:hide="@{viewModel.sessionState == SessionState.COMPLETE}"
+                android:id="@+id/imvAction"
+                android:layout_width="@dimen/action_button_size"
+                android:layout_height="@dimen/action_button_size"
+                android:layout_marginBottom="@dimen/margin_small"
+                app:sessionState="@{viewModel.sessionState}"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                tools:ignore="ContentDescription" />
+
+            <ImageView
+                android:id="@+id/imvResume"
+                android:layout_width="@dimen/icon_size"
+                android:layout_height="@dimen/icon_size"
+                android:layout_marginStart="@dimen/margin_normal"
+                android:layout_marginEnd="@dimen/margin_large"
+                android:src="@drawable/ic_restart"
+                app:hide="@{viewModel.sessionState != SessionState.PAUSE}"
+                app:layout_constraintBottom_toBottomOf="@id/imvAction"
+                app:layout_constraintTop_toTopOf="@id/imvAction"
+                app:layout_constraintRight_toLeftOf="@id/imvAction"
+                
+                tools:ignore="ContentDescription" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <FrameLayout
+            app:layout_constraintTop_toBottomOf="@id/map"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/divider_height"
+            android:background="@color/black"/>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</layout>
