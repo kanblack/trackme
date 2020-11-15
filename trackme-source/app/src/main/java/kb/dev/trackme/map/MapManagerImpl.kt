@@ -1,6 +1,7 @@
 package kb.dev.trackme.map
 
 import android.app.Activity
+import android.graphics.Color
 import android.location.Location
 import android.location.LocationManager
 import android.util.Log
@@ -56,7 +57,12 @@ class MapManagerImpl(
 
     private fun requestUpdateRoute(route: List<LatLng>) {
         currentPolyline?.remove()
-        currentPolyline = mMap?.addPolyline(PolylineOptions().add(*route.toTypedArray()))
+        currentPolyline = mMap?.addPolyline(PolylineOptions().apply {
+            add(*route.toTypedArray())
+            width(POLYLINE_WIDTH)
+            color(POLYLINE_COLOR)
+            jointType(JointType.ROUND)
+        })
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
@@ -93,7 +99,12 @@ class MapManagerImpl(
 
                 mMapToSave?.apply {
                     moveCamera(CameraUpdateFactory.newLatLngZoom(bounds.center, zoomLevel))
-                    addPolyline(PolylineOptions().add(*route.toTypedArray()))
+                    addPolyline(PolylineOptions().apply {
+                        add(*route.toTypedArray())
+                        width(POLYLINE_WIDTH)
+                        color(POLYLINE_COLOR)
+                        jointType(JointType.ROUND)
+                    })
                     addMarker(
                         MarkerOptions().apply {
                             startLatLng?.let { position(it) }
@@ -109,7 +120,7 @@ class MapManagerImpl(
                 }
 
                 GlobalScope.launch(Dispatchers.IO) {
-                    delay(100)
+                    delay(1000)
                     ct.resume(getMapSnapshot())
                 }
             }
@@ -161,7 +172,7 @@ class MapManagerImpl(
         try {
             if (sharePreferenceUtils.getGrantPermissionStatus()) {
                 mMap?.isMyLocationEnabled = true
-                mMap?.uiSettings?.isMyLocationButtonEnabled = true
+                mMap?.uiSettings?.isMyLocationButtonEnabled = false
             } else {
                 mMap?.isMyLocationEnabled = false
                 mMap?.uiSettings?.isMyLocationButtonEnabled = false
@@ -198,6 +209,8 @@ class MapManagerImpl(
     }
 
     companion object {
+        private const val POLYLINE_WIDTH = 14f
+        private val POLYLINE_COLOR = Color.parseColor("#0747A6")
         private const val DEFAULT_ZOOM = 17f
     }
 }
