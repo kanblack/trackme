@@ -84,10 +84,11 @@ class SessionsHistoryActivity : AppCompatActivity() {
                     super.getItemOffsets(outRect, view, parent, state)
                     val position = parent.getChildAdapterPosition(view)
                     val count = parent.adapter?.itemCount ?: 0
-                    if(position == 0){
-                        outRect.top = this@SessionsHistoryActivity.resources.getDimensionPixelOffset(
-                            R.dimen.margin_normal
-                        )
+                    if (position == 0) {
+                        outRect.top =
+                            this@SessionsHistoryActivity.resources.getDimensionPixelOffset(
+                                R.dimen.margin_normal
+                            )
                     }
                     outRect.bottom = this@SessionsHistoryActivity.resources.getDimensionPixelOffset(
                         R.dimen.margin_normal
@@ -101,7 +102,17 @@ class SessionsHistoryActivity : AppCompatActivity() {
                 }
             }
         )
+        val tvEmptyData = findViewById<TextView>(R.id.tvNoData)
 
+        pagingAdapter.addLoadStateListener { loadState ->
+            if (loadState.append.endOfPaginationReached) {
+                if (pagingAdapter.itemCount < 1)
+                    tvEmptyData.visibility = View.VISIBLE
+                else {
+                    tvEmptyData.visibility = View.GONE
+                }
+            }
+        }
         rcvSessions?.adapter = pagingAdapter
     }
 
@@ -120,7 +131,6 @@ class SessionsHistoryActivity : AppCompatActivity() {
     }
 
     class SessionViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-
         fun bind(item: Session?) {
             item?.let { session: Session ->
                 session.route?.let {

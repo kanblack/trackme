@@ -14,6 +14,5 @@ class SessionRepositoryImpl(private val sessionDao: SessionDao) : SessionReposit
     @WorkerThread
     override suspend fun saveNewSession(session: Session ) {
         val id =  sessionDao.insert(session)
-        Log.e("Save session complete","$id")
     }
 }

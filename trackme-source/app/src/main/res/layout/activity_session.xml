@@ -23,10 +23,16 @@
             android:id="@+id/mapToSave"
             android:name="com.google.android.gms.maps.SupportMapFragment"
             android:layout_width="match_parent"
-            android:layout_height="200dp"
+            android:layout_height="@dimen/router_view_height"
             app:layout_constraintBottom_toTopOf="@+id/layoutSession"
             app:layout_constraintTop_toTopOf="parent"
             tools:context=".mvvm.views.SessionActivity" />
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/white"
+            app:layout_constraintBottom_toTopOf="@+id/layoutSession"
+            app:layout_constraintTop_toTopOf="parent"/>
 
         <fragment
             android:id="@+id/map"
@@ -42,28 +48,28 @@
             android:id="@+id/layoutNoPermission"
             hide="@{viewModel.isPermissionGranted}"
             android:layout_width="match_parent"
-            android:layout_height="150dp"
+            android:layout_height="@dimen/action_layout_height"
             android:background="@color/white"
             app:layout_constraintBottom_toBottomOf="parent">
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:layout_marginTop="8dp"
-                android:drawablePadding="8dp"
+                android:layout_marginStart="@dimen/margin_small"
+                android:layout_marginTop="@dimen/margin_small"
+                android:drawablePadding="@dimen/margin_small"
                 android:text="@string/the_session_can_t_record_without_location_permission"
                 android:textColor="@color/black"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
-                app:layout_goneMarginLeft="16dp" />
+                app:layout_goneMarginLeft="@dimen/margin_normal" />
 
             <Button
                 android:id="@+id/btnCancelSession"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
-                android:layout_marginBottom="16dp"
+                android:layout_marginStart="@dimen/margin_normal"
+                android:layout_marginBottom="@dimen/margin_normal"
                 android:text="@string/cancel_session"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent" />
@@ -72,8 +78,8 @@
                 android:id="@+id/btnGrantPermission"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="16dp"
-                android:layout_marginBottom="16dp"
+                android:layout_marginEnd="@dimen/margin_normal"
+                android:layout_marginBottom="@dimen/margin_normal"
                 android:text="@string/grant_permission"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent" />
@@ -83,7 +89,7 @@
             hide="@{!viewModel.isPermissionGranted}"
             android:id="@+id/layoutSession"
             android:layout_width="match_parent"
-            android:layout_height="150dp"
+            android:layout_height="@dimen/action_layout_height"
             android:background="@color/white"
             app:layout_constraintBottom_toBottomOf="parent">
 
@@ -92,9 +98,9 @@
                 android:id="@+id/tvDistance"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:layout_marginTop="8dp"
-                android:drawablePadding="8dp"
+                android:layout_marginStart="@dimen/margin_small"
+                android:layout_marginTop="@dimen/margin_small"
+                android:drawablePadding="@dimen/margin_small"
                 android:hint="@string/hint_distance"
                 android:textColor="@color/black"
                 app:distance="@{viewModel.distance}"
@@ -106,10 +112,10 @@
                 android:id="@+id/tvDuration"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:layout_marginTop="8dp"
-                android:layout_marginEnd="16dp"
-                android:drawablePadding="8dp"
+                android:layout_marginStart="@dimen/margin_small"
+                android:layout_marginTop="@dimen/margin_small"
+                android:layout_marginEnd="@dimen/margin_normal"
+                android:drawablePadding="@dimen/margin_small"
                 android:hint="@string/hint_duration"
                 android:textColor="@color/black"
                 app:drawableStartCompat="@drawable/ic_duration"
@@ -121,9 +127,9 @@
                 android:id="@+id/tvAvgSpeed"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:layout_marginTop="8dp"
-                android:drawablePadding="8dp"
+                android:layout_marginStart="@dimen/margin_small"
+                android:layout_marginTop="@dimen/margin_small"
+                android:drawablePadding="@dimen/margin_small"
                 android:hint="@string/hint_avg_speed"
                 android:textColor="@color/black"
                 app:drawableStartCompat="@drawable/ic_speed"
@@ -133,9 +139,9 @@
                 app:velocity="@{viewModel.currentSpeed}" />
 
             <ProgressBar
-                android:layout_width="75dp"
-                android:layout_height="75dp"
-                android:layout_marginBottom="8dp"
+                android:layout_width="@dimen/action_button_size"
+                android:layout_height="@dimen/action_button_size"
+                android:layout_marginBottom="@dimen/margin_small"
                 app:hide="@{viewModel.sessionState != SessionState.COMPLETE}"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
@@ -144,9 +150,9 @@
             <ImageView
                 app:hide="@{viewModel.sessionState == SessionState.COMPLETE}"
                 android:id="@+id/imvAction"
-                android:layout_width="75dp"
-                android:layout_height="75dp"
-                android:layout_marginBottom="8dp"
+                android:layout_width="@dimen/action_button_size"
+                android:layout_height="@dimen/action_button_size"
+                android:layout_marginBottom="@dimen/margin_small"
                 app:sessionState="@{viewModel.sessionState}"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
@@ -171,7 +177,7 @@
         <FrameLayout
             app:layout_constraintTop_toBottomOf="@id/map"
             android:layout_width="match_parent"
-            android:layout_height="1dp"
+            android:layout_height="@dimen/divider_height"
             android:background="@color/black"/>
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

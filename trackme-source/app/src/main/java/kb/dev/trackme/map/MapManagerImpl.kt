@@ -25,7 +25,6 @@ import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 import kotlin.math.ln
 
-
 class MapManagerImpl(
     private val imageStorage: ImageStorage,
     private val sharePreferenceUtils: SharePreferenceUtils
@@ -74,13 +73,11 @@ class MapManagerImpl(
         requestUpdateRoute(event.route)
     }
 
-
     override fun release() {
         EventBus.getDefault().unregister(this)
     }
 
     override suspend fun getRouteImage(): String {
-        Log.e("@@@","get route")
         return suspendCoroutine { ct ->
             val session = session.value
             val route = session?.route ?: listOf()
@@ -120,18 +117,14 @@ class MapManagerImpl(
                     val scale = radius / 340
                     val zoomLevel = (16 - ln(scale) / ln(2.0)).toFloat()
 
-                    Log.e("zoom level", "zoomLevel: $zoomLevel - radius: $radius")
-
                     mMapToSave?.moveCamera(
                         CameraUpdateFactory
                             .newLatLngZoom(bounds.center, zoomLevel)
                     )
                     mMapToSave?.addPolyline(PolylineOptions().add(*route.toTypedArray()))
                     delay(1000)
-                    Log.e("snapshot", "${mMapToSave == null}")
                     mMapToSave?.snapshot { snapshotBitmap ->
                         GlobalScope.launch {
-                            Log.e("snapshot", "complete")
                             ct.resume(
                                 imageStorage.storeImage(
                                     snapshotBitmap,

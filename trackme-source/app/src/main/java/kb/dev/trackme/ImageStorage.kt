@@ -20,7 +20,6 @@ class ImageStorage(private val context: Context) {
         imageName: String = System.currentTimeMillis().toString()
     ): String = withContext(Dispatchers.IO) {
         suspendCoroutine<String> { ct ->
-            val tag = "storeImage"
             val pictureFile = File("${context.filesDir.path}/$imageName.jpg")
             try {
                 val fos = FileOutputStream(pictureFile)
@@ -34,8 +33,6 @@ class ImageStorage(private val context: Context) {
 
                         override fun onSuccess(file: File) {
                             ct.resume(file.absolutePath)
-                            Log.e("save image success", file.absolutePath)
-                            Log.e("origin image success", pictureFile.absolutePath)
                         }
 
                         override fun onError(e: Throwable?) {
@@ -44,10 +41,14 @@ class ImageStorage(private val context: Context) {
 
                     })
             } catch (e: FileNotFoundException) {
-                Log.e(tag, "File not found: " + e.message)
+                Log.e(TAG, "File not found: " + e.message)
             } catch (e: IOException) {
-                Log.e(tag, "Error accessing file: " + e.message)
+                Log.e(TAG, "Error accessing file: " + e.message)
             }
         }
+    }
+
+    companion object {
+        private val TAG = ImageStorage::class.java.simpleName
     }
 }

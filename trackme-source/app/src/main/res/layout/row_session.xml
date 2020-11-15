@@ -9,7 +9,7 @@
     <ImageView
         android:id="@+id/imvRoute"
         android:layout_width="match_parent"
-        android:layout_height="200dp"
+        android:layout_height="@dimen/router_view_height"
         app:layout_constraintTop_toTopOf="parent"
         tools:ignore="ContentDescription" />
 
@@ -19,8 +19,8 @@
         android:id="@+id/tvDistance"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:drawablePadding="8dp"
+        android:layout_marginStart="@dimen/margin_small"
+        android:drawablePadding="@dimen/margin_small"
         android:hint="@string/hint_distance"
         app:drawableStartCompat="@drawable/ic_distance"
         app:layout_constraintTop_toBottomOf="@id/viewDivider"
@@ -32,9 +32,9 @@
         android:id="@+id/tvDuration"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginEnd="16dp"
-        android:drawablePadding="8dp"
+        android:layout_marginStart="@dimen/margin_small"
+        android:layout_marginEnd="@dimen/margin_normal"
+        android:drawablePadding="@dimen/margin_small"
         android:hint="@string/hint_duration"
         app:drawableStartCompat="@drawable/ic_duration"
         app:layout_constraintTop_toBottomOf="@id/viewDivider"
@@ -46,8 +46,8 @@
         android:id="@+id/tvAvgSpeed"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:drawablePadding="8dp"
+        android:layout_marginStart="@dimen/margin_small"
+        android:drawablePadding="@dimen/margin_small"
         android:hint="@string/hint_avg_speed"
         app:drawableStartCompat="@drawable/ic_avg_speed"
         app:layout_constraintTop_toBottomOf="@id/viewDivider"
@@ -58,19 +58,19 @@
         app:layout_constraintTop_toTopOf="parent"
         android:background="@color/black"
         android:layout_width="match_parent"
-        android:layout_height="1dp"/>
+        android:layout_height="@dimen/divider_height"/>
     <FrameLayout
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="@dimen/margin_normal"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/tvAvgSpeed"
         android:background="@color/black"
         android:layout_width="match_parent"
-        android:layout_height="1dp"/>
+        android:layout_height="@dimen/divider_height"/>
     <FrameLayout
         android:id="@+id/viewDivider"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/imvRoute"
         android:background="@color/black"
         android:layout_width="match_parent"
-        android:layout_height="1dp"/>
+        android:layout_height="@dimen/divider_height"/>
 </androidx.constraintlayout.widget.ConstraintLayout>
