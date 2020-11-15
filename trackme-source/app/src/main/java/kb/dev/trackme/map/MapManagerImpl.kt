@@ -95,7 +95,7 @@ class MapManagerImpl(
 
             session?.lastKnowLocation?.let { lastKnownLocation ->
                 val bounds = getRouteBoundLatLgn(route)
-                val zoomLevel = getZoomLevel(bounds)
+                val zoomLevel = getOverallZoomLevel(bounds)
 
                 mMapToSave?.apply {
                     moveCamera(CameraUpdateFactory.newLatLngZoom(bounds.center, zoomLevel))
@@ -142,7 +142,7 @@ class MapManagerImpl(
         }
     }
 
-    private fun getZoomLevel(bounds: LatLngBounds): Float {
+    private fun getOverallZoomLevel(bounds: LatLngBounds): Float {
         val loc1 = Location(LocationManager.GPS_PROVIDER).apply {
             latitude = bounds.northeast.latitude
             longitude = bounds.northeast.longitude
