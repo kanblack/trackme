@@ -434,9 +434,9 @@ class LocationUpdatesService : Service() {
 
     companion object {
         private const val NOTIFICATION_ID = 1
-        private const val MINIMUM_DISTANCE_IN_METER = 20
+        private const val MINIMUM_DISTANCE_IN_METER = 5
         private const val ONE_SECOND_IN_MILLS = 1000L
-        private const val UPDATE_INTERVAL_IN_MILLISECONDS = 10 * ONE_SECOND_IN_MILLS
+        private const val UPDATE_INTERVAL_IN_MILLISECONDS = 3 * ONE_SECOND_IN_MILLS
         private const val FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS =
             UPDATE_INTERVAL_IN_MILLISECONDS / 2
         private const val INTERVAL_BACKUP_JOB = 3 * ONE_SECOND_IN_MILLS
