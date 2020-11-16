@@ -21,7 +21,7 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="@dimen/margin_small"
         android:drawablePadding="@dimen/margin_small"
-        android:hint="@string/hint_distance"
+        android:hint="@string/lbl_hint_distance"
         app:drawableStartCompat="@drawable/ic_distance"
         app:layout_constraintTop_toBottomOf="@id/viewDivider"
         app:layout_constraintStart_toStartOf="parent" />
@@ -35,7 +35,7 @@
         android:layout_marginStart="@dimen/margin_small"
         android:layout_marginEnd="@dimen/margin_normal"
         android:drawablePadding="@dimen/margin_small"
-        android:hint="@string/hint_duration"
+        android:hint="@string/lbl_hint_duration"
         app:drawableStartCompat="@drawable/ic_duration"
         app:layout_constraintTop_toBottomOf="@id/viewDivider"
         app:layout_constraintRight_toRightOf="parent" />
@@ -48,7 +48,7 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="@dimen/margin_small"
         android:drawablePadding="@dimen/margin_small"
-        android:hint="@string/hint_avg_speed"
+        android:hint="@string/lbl_hint_avg_speed"
         app:drawableStartCompat="@drawable/ic_avg_speed"
         app:layout_constraintTop_toBottomOf="@id/viewDivider"
         app:layout_constraintLeft_toRightOf="@id/tvDistance"

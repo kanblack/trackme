@@ -45,5 +45,5 @@ fun setDuration(tv: TextView, durationInMills: Double) {
 @BindingAdapter("velocity")
 fun setVelocity(tv: TextView, velocity: Double) {
     val context = tv.context
-    tv.text = context.getString(R.string.tv_avg_speed, NumberFormat.getInstance().format(velocity))
+    tv.text = context.getString(R.string.lbl_tv_avg_speed, NumberFormat.getInstance().format(velocity))
 }

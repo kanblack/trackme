@@ -15,7 +15,6 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.tasks.Task
 import com.google.gson.Gson
 import kb.dev.trackme.*
 import kb.dev.trackme.R
@@ -115,9 +114,8 @@ class LocationUpdatesService : Service() {
         val builder = getNotificationBuilder()
         getPendingIntent()
         return builder.apply {
-            setContentTitle(getString(R.string.ic_notification_title))
+            setContentTitle(getString(R.string.msg_session_active))
             setSmallIcon(R.drawable.ic_speed)
-            setTicker(getString(R.string.ic_notification_title))
             setContentIntent(getPendingIntent())
         }.build()
     }
@@ -142,14 +140,13 @@ class LocationUpdatesService : Service() {
         return NotificationCompat.Builder(this, channelId)
     }
 
-    private fun updateNotification(message: String) {
+    private fun updateNotification(title: String, message: String) {
         val builder = getNotificationBuilder()
         builder.apply {
             setContentIntent(getPendingIntent())
-            setContentTitle(getString(R.string.ic_notification_title))
+            setContentTitle(title)
             setContentText(message)
             setSmallIcon(R.drawable.ic_speed)
-            setTicker(getString(R.string.ic_notification_title))
         }
         with(NotificationManagerCompat.from(this)) {
             // notificationId is a unique int for each notification that you must define
@@ -229,6 +226,10 @@ class LocationUpdatesService : Service() {
                     requestStopLocationUpdates()
                     sessionState = SessionState.PAUSE
                     cancelJob()
+                    updateNotification(getString(R.string.msg_session_pause),getDurationFormatted(
+                        this@LocationUpdatesService,
+                        duration.toLong()
+                    ))
                 }
                 EXTRA_CMD_REQUEST_RESUME_SESSION -> {
                     requestLocationUpdates()
@@ -374,6 +375,7 @@ class LocationUpdatesService : Service() {
             if (sessionState == SessionState.ACTIVE) {
                 duration += INTERVAL_UPDATE_TIME_JOB
                 updateNotification(
+                    getString(R.string.msg_session_active),
                     getDurationFormatted(
                         this@LocationUpdatesService,
                         duration.toLong()
@@ -432,7 +434,7 @@ class LocationUpdatesService : Service() {
 
     companion object {
         private const val NOTIFICATION_ID = 1
-        private const val MINIMUM_DISTANCE_IN_METER = 10
+        private const val MINIMUM_DISTANCE_IN_METER = 20
         private const val ONE_SECOND_IN_MILLS = 1000L
         private const val UPDATE_INTERVAL_IN_MILLISECONDS = 10 * ONE_SECOND_IN_MILLS
         private const val FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS =

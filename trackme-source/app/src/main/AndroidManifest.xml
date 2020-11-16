@@ -21,7 +21,7 @@
 
         <activity
             android:name=".mvvm.views.SessionActivity"
-            android:label="@string/title_activity_session" >
+            android:label="@string/title_activity_session_active" >
 
         </activity>
         <activity android:name=".mvvm.views.SessionsHistoryActivity">
