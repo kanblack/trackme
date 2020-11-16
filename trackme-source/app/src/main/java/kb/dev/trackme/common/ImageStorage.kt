@@ -1,4 +1,4 @@
-package kb.dev.trackme
+package kb.dev.trackme.common
 
 import android.content.Context
 import android.graphics.Bitmap
@@ -19,7 +19,7 @@ class ImageStorage(private val context: Context) {
         image: Bitmap,
         imageName: String = System.currentTimeMillis().toString()
     ): String = withContext(Dispatchers.IO) {
-        suspendCoroutine<String> { ct ->
+        suspendCoroutine { ct ->
             val pictureFile = File("${context.filesDir.path}/$imageName.jpg")
             try {
                 val fos = FileOutputStream(pictureFile)

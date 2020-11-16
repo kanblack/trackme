@@ -18,17 +18,19 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.gson.Gson
 import kb.dev.trackme.*
 import kb.dev.trackme.R
-import kb.dev.trackme.utils.SharePreferenceUtils
-import kb.dev.trackme.utils.getVelocity
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import kb.dev.trackme.common.SharePreferenceUtils
+import kb.dev.trackme.common.getDurationFormatted
+import kb.dev.trackme.common.getVelocity
+import kb.dev.trackme.mvvm.BackupSession
+import kb.dev.trackme.mvvm.SessionEvent
+import kb.dev.trackme.mvvm.views.SessionActivity
+import kotlinx.coroutines.*
 import org.greenrobot.eventbus.EventBus
 import org.koin.android.ext.android.inject
-import java.util.concurrent.TimeUnit
 
 
+@FlowPreview
+@ExperimentalCoroutinesApi
 class LocationUpdatesService : Service() {
     private val sharedPreferences: SharePreferenceUtils by inject()
     private var currentSpeed: Double = 0.0
@@ -50,6 +52,9 @@ class LocationUpdatesService : Service() {
     private var timerJob: Job? = null
 
     private var mFusedLocationProviderClient: FusedLocationProviderClient? = null
+
+    private var lastDistance = 0.0
+    private var lastDuration = 0.0
 
     private val mLocationCallback = object : LocationCallback() {
         override fun onLocationResult(locationResult: LocationResult?) {
@@ -107,11 +112,20 @@ class LocationUpdatesService : Service() {
 
     private fun getNotification(): Notification? {
         val builder = getNotificationBuilder()
-        return builder
-            .setContentTitle(getString(R.string.ic_notification_title))
-            .setSmallIcon(R.drawable.ic_speed)
-            .setTicker(getString(R.string.ic_notification_title))
-            .build()
+        getPendingIntent()
+        return builder.apply {
+            setContentTitle(getString(R.string.msg_session_active))
+            setSmallIcon(R.drawable.ic_speed)
+            setContentIntent(getPendingIntent())
+        }.build()
+    }
+
+    private fun getPendingIntent(): PendingIntent? {
+        val resultIntent = Intent(this, SessionActivity::class.java)
+        return TaskStackBuilder.create(this).run {
+            addNextIntentWithParentStack(resultIntent)
+            getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT)
+        }
     }
 
     private fun getNotificationBuilder(): NotificationCompat.Builder {
@@ -126,13 +140,14 @@ class LocationUpdatesService : Service() {
         return NotificationCompat.Builder(this, channelId)
     }
 
-    private fun updateNotification(message: String) {
+    private fun updateNotification(title: String, message: String) {
         val builder = getNotificationBuilder()
-        builder
-            .setContentTitle(getString(R.string.ic_notification_title))
-            .setContentText(message)
-            .setSmallIcon(R.drawable.ic_speed)
-            .setTicker(getString(R.string.ic_notification_title))
+        builder.apply {
+            setContentIntent(getPendingIntent())
+            setContentTitle(title)
+            setContentText(message)
+            setSmallIcon(R.drawable.ic_speed)
+        }
         with(NotificationManagerCompat.from(this)) {
             // notificationId is a unique int for each notification that you must define
             notify(NOTIFICATION_ID, builder.build())
@@ -157,7 +172,7 @@ class LocationUpdatesService : Service() {
 
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
         try {
-            val type = intent.getStringExtra("type")
+            val type = intent.getStringExtra(EXTRA_CMD_REQUEST_TYPE)
             onStartSession(type)
         } catch (e: Exception) {
             e.printStackTrace()
@@ -203,21 +218,25 @@ class LocationUpdatesService : Service() {
     private fun onStartSession(type: String?) {
         try {
             when (type) {
-                EXTRA_REQUEST_START_SESSION -> {
+                EXTRA_CMD_REQUEST_START_SESSION -> {
                     onRequestStartSession()
                 }
-                EXTRA_REQUEST_PAUSE_SESSION -> {
+                EXTRA_CMD_REQUEST_PAUSE_SESSION -> {
                     backupState()
                     requestStopLocationUpdates()
                     sessionState = SessionState.PAUSE
                     cancelJob()
+                    updateNotification(getString(R.string.msg_session_pause),getDurationFormatted(
+                        this@LocationUpdatesService,
+                        duration.toLong()
+                    ))
                 }
-                EXTRA_REQUEST_RESUME_SESSION -> {
+                EXTRA_CMD_REQUEST_RESUME_SESSION -> {
                     requestLocationUpdates()
                     sessionState = SessionState.ACTIVE
                     startJob()
                 }
-                EXTRA_REQUEST_COMPLETE_SESSION -> {
+                EXTRA_CMD_REQUEST_COMPLETE_SESSION -> {
                     sessionState = SessionState.COMPLETE
                     cancelJob()
                     requestStopLocationUpdates()
@@ -234,7 +253,7 @@ class LocationUpdatesService : Service() {
             }
             sessionState?.let { sharedPreferences.saveActiveSession(it) }
         } catch (e: Exception) {
-            onStartSession(EXTRA_REQUEST_PAUSE_SESSION)
+            onStartSession(EXTRA_CMD_REQUEST_PAUSE_SESSION)
             e.printStackTrace()
         }
 
@@ -252,9 +271,9 @@ class LocationUpdatesService : Service() {
 
     private fun restart() {
         val type = when (sharedPreferences.getLastSessionSate()) {
-            SessionState.ACTIVE.toString() -> EXTRA_REQUEST_RESUME_SESSION
-            SessionState.PAUSE.toString() -> EXTRA_REQUEST_RESUME_SESSION
-            else -> EXTRA_REQUEST_START_SESSION
+            SessionState.ACTIVE.toString() -> EXTRA_CMD_REQUEST_RESUME_SESSION
+            SessionState.PAUSE.toString() -> EXTRA_CMD_REQUEST_RESUME_SESSION
+            else -> EXTRA_CMD_REQUEST_START_SESSION
         }
         onStartSession(type)
         getLastLocation()
@@ -310,7 +329,6 @@ class LocationUpdatesService : Service() {
         return locationRequest
     }
 
-
     private fun requestLocationUpdates() {
         try {
             mFusedLocationProviderClient?.requestLocationUpdates(
@@ -329,9 +347,6 @@ class LocationUpdatesService : Service() {
             Log.e(TAG, "Lost location permission. Could not remove updates. $unlikely")
         }
     }
-
-    var lastDistance = 0.0
-    var lastDuration = 0.0
 
     private fun updateVelocityJob() = GlobalScope.launch {
         while (sessionState != SessionState.COMPLETE) {
@@ -359,29 +374,17 @@ class LocationUpdatesService : Service() {
         while (sessionState != SessionState.COMPLETE) {
             if (sessionState == SessionState.ACTIVE) {
                 duration += INTERVAL_UPDATE_TIME_JOB
-                updateNotification(getDurationFormatted())
+                updateNotification(
+                    getString(R.string.msg_session_active),
+                    getDurationFormatted(
+                        this@LocationUpdatesService,
+                        duration.toLong()
+                    )
+                )
                 notifySessionToApp()
             }
             delay(INTERVAL_UPDATE_TIME_JOB)
         }
-    }
-
-    private fun getDurationFormatted(): String {
-        val durationInMills = duration.toLong()
-        val hours = TimeUnit.MILLISECONDS.toHours(durationInMills)
-        val minutes =
-            TimeUnit.MILLISECONDS.toMinutes(durationInMills - (TimeUnit.HOURS.toMillis(hours)))
-        val seconds = TimeUnit.MILLISECONDS.toSeconds(
-            durationInMills.toLong()
-                    - (TimeUnit.HOURS.toMillis(hours))
-                    - (TimeUnit.MINUTES.toMillis(minutes))
-        )
-        return getString(
-            R.string.tv_duration,
-            hours.toString().padStart(2, '0'),
-            minutes.toString().padStart(2, '0'),
-            seconds.toString().padStart(2, '0')
-        )
     }
 
     private fun onNewLocation(location: Location?) {
@@ -431,9 +434,9 @@ class LocationUpdatesService : Service() {
 
     companion object {
         private const val NOTIFICATION_ID = 1
-        private const val MINIMUM_DISTANCE_IN_METER = 10
+        private const val MINIMUM_DISTANCE_IN_METER = 5
         private const val ONE_SECOND_IN_MILLS = 1000L
-        private const val UPDATE_INTERVAL_IN_MILLISECONDS = 1 * ONE_SECOND_IN_MILLS
+        private const val UPDATE_INTERVAL_IN_MILLISECONDS = 3 * ONE_SECOND_IN_MILLS
         private const val FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS =
             UPDATE_INTERVAL_IN_MILLISECONDS / 2
         private const val INTERVAL_BACKUP_JOB = 3 * ONE_SECOND_IN_MILLS

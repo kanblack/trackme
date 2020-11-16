@@ -1,13 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="kb.dev.trackme">
-    <!--
-         The ACCESS_COARSE/FINE_LOCATION permissions are not required to use
-         Google Maps Android API v2, but you must specify either coarse or fine
-         location permissions for the "MyLocation" functionality.
-    -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
 
     <application
@@ -17,15 +11,6 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.TrackMe"
         android:name=".MainApplication">
-
-        <!--
-             The API key for Google Maps-based APIs is defined as a string resource.
-             (See the file "res/values/google_maps_api.xml").
-             Note that the API key is linked to the encryption key used to sign the APK.
-             You need a different API key for each encryption key, including the release key that is used to
-             sign the APK for publishing.
-             You can define the keys for the debug and release targets in src/debug/ and src/release/.
-        -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="@string/google_maps_key" />
@@ -34,9 +19,8 @@
             android:value="@integer/google_play_services_version" />
 
         <activity
-            android:launchMode="singleTask"
             android:name=".mvvm.views.SessionActivity"
-            android:label="@string/title_activity_maps" >
+            android:label="@string/title_activity_session_active" >
 
         </activity>
         <activity android:name=".mvvm.views.SessionsHistoryActivity">
@@ -46,11 +30,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
         <service
             android:name=".services.LocationUpdatesService"
-            android:foregroundServiceType="location">
-            <!-- Any inner elements would go here. -->
-        </service>
+            android:foregroundServiceType="location" />
     </application>
 
 </manifest>

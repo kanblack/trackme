@@ -5,5 +5,6 @@ import kb.dev.trackme.database.Session
 
 interface SessionRepository {
     fun getSessions(): PagingSource<Int, Session>
+
     suspend fun saveNewSession(session: Session)
 }

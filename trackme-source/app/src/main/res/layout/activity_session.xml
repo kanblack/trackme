@@ -57,7 +57,7 @@
                 android:layout_marginStart="@dimen/margin_small"
                 android:layout_marginTop="@dimen/margin_small"
                 android:drawablePadding="@dimen/margin_small"
-                android:text="@string/the_session_can_t_record_without_location_permission"
+                android:text="@string/msg_the_session_can_t_record_without_location_permission"
                 android:textColor="@color/black"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
@@ -70,7 +70,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="@dimen/margin_normal"
                 android:layout_marginBottom="@dimen/margin_normal"
-                android:text="@string/cancel_session"
+                android:text="@string/lbl_cancel_session"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent" />
 
@@ -80,7 +80,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="@dimen/margin_normal"
                 android:layout_marginBottom="@dimen/margin_normal"
-                android:text="@string/grant_permission"
+                android:text="@string/lbl_grant_permission"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent" />
         </androidx.constraintlayout.widget.ConstraintLayout>
@@ -101,7 +101,7 @@
                 android:layout_marginStart="@dimen/margin_small"
                 android:layout_marginTop="@dimen/margin_small"
                 android:drawablePadding="@dimen/margin_small"
-                android:hint="@string/hint_distance"
+                android:hint="@string/lbl_hint_distance"
                 android:textColor="@color/black"
                 app:distance="@{viewModel.distance}"
                 app:drawableStartCompat="@drawable/ic_distance"
@@ -116,7 +116,7 @@
                 android:layout_marginTop="@dimen/margin_small"
                 android:layout_marginEnd="@dimen/margin_normal"
                 android:drawablePadding="@dimen/margin_small"
-                android:hint="@string/hint_duration"
+                android:hint="@string/lbl_hint_duration"
                 android:textColor="@color/black"
                 app:drawableStartCompat="@drawable/ic_duration"
                 app:duration="@{viewModel.duration}"
@@ -130,7 +130,7 @@
                 android:layout_marginStart="@dimen/margin_small"
                 android:layout_marginTop="@dimen/margin_small"
                 android:drawablePadding="@dimen/margin_small"
-                android:hint="@string/hint_avg_speed"
+                android:hint="@string/lbl_hint_avg_speed"
                 android:textColor="@color/black"
                 app:drawableStartCompat="@drawable/ic_speed"
                 app:layout_constraintLeft_toRightOf="@id/tvDistance"
